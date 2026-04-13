@@ -53,7 +53,8 @@ void loadConfiguration() {
 
     //Mesh network params
     if (GlobalParams::topology == TOPOLOGY_MESH      ||
-        GlobalParams::topology == TOPOLOGY_TORUS       ) {
+        GlobalParams::topology == TOPOLOGY_TORUS     ||
+        GlobalParams::topology == TOPOLOGY_FOLDED_TORUS
         GlobalParams::mesh_dim_x = readParam<int>(config, "mesh_dim_x");
         GlobalParams::mesh_dim_y = readParam<int>(config, "mesh_dim_y");
     }
@@ -211,12 +212,14 @@ void showHelp(char selfname[])
          << "\t-topology TYPE\t\tSet the topology to one of the following:" << endl
          << "\t\tMESH\t\t2D Mesh" << endl
             << "\t\tTORUS\t\t2D Torus" << endl
+            << "\t\tFOLDED_TORUS\t2D Folded Torus" << endl
          << "\t\tBUTTERFLY\tDelta network Butterfly (radix 2)" << endl
          << "\t\tBASELINE\tDelta network Baseline" << endl
          << "\t\tOMEGA\t\tDelta network Omega" << endl
          << "\t-routing TYPE\t\tSet the routing algorithm to one of the following:" << endl
          << "\t\tXY\t\tXY routing algorithm" << endl
          << "\t\tXY_TORUS\t\tXY routing algorithm for torus topology" << endl
+         << "\t\tXY_FOLDED_TORUS\t\tXY routing algorithm for folded torus topology" << endl
          << "\t\tWEST_FIRST\tWest-First routing algorithm" << endl
          << "\t\tNORTH_LAST\tNorth-Last routing algorithm" << endl
          << "\t\tNEGATIVE_FIRST\tNegative-First routing algorithm" << endl
@@ -283,7 +286,8 @@ void showConfig()
 
 void checkConfiguration()
 {
-	if (GlobalParams::topology==TOPOLOGY_MESH || GlobalParams::topology==TOPOLOGY_TORUS)
+	if (GlobalParams::topology==TOPOLOGY_MESH || GlobalParams::topology==TOPOLOGY_TORUS 
+        || GlobalParams::topology==TOPOLOGY_FOLDED_TORUS)
 	{
 		if (GlobalParams::mesh_dim_x <= 1) {
 			cerr << "Error: dimx must be greater than 1" << endl;
@@ -369,7 +373,8 @@ void checkConfiguration()
     }
 
     for (unsigned int i = 0; i < GlobalParams::hotspots.size(); i++) {
-	if (GlobalParams::topology==TOPOLOGY_MESH || GlobalParams::topology==TOPOLOGY_TORUS){
+	if (GlobalParams::topology==TOPOLOGY_MESH || GlobalParams::topology==TOPOLOGY_TORUS
+        || GlobalParams::topology==TOPOLOGY_FOLDED_TORUS){
 		if (GlobalParams::hotspots[i].first >=
 		    GlobalParams::mesh_dim_x *
 		    GlobalParams::mesh_dim_y) {
