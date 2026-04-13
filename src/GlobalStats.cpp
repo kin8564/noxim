@@ -25,7 +25,7 @@ double GlobalStats::getAverageDelay()
     unsigned int total_packets = 0;
     double avg_delay = 0.0;
 
-    if (GlobalParams::topology == TOPOLOGY_MESH)
+    if (GlobalParams::topology == TOPOLOGY_MESH || GlobalParams::topology == TOPOLOGY_TORUS)
     {
 	for (int y = 0; y < GlobalParams::mesh_dim_y; y++)
 	    for (int x = 0; x < GlobalParams::mesh_dim_x; x++) 
@@ -82,7 +82,7 @@ double GlobalStats::getMaxDelay()
 {
     double maxd = -1.0;
 
-    if (GlobalParams::topology == TOPOLOGY_MESH) 
+    if (GlobalParams::topology == TOPOLOGY_MESH || GlobalParams::topology == TOPOLOGY_TORUS) 
     {
 	for (int y = 0; y < GlobalParams::mesh_dim_y; y++)
 	    for (int x = 0; x < GlobalParams::mesh_dim_x; x++) 
@@ -112,7 +112,7 @@ double GlobalStats::getMaxDelay()
 
 double GlobalStats::getMaxDelay(const int node_id)
 {
-    if (GlobalParams::topology == TOPOLOGY_MESH) 
+    if (GlobalParams::topology == TOPOLOGY_MESH || GlobalParams::topology == TOPOLOGY_TORUS) 
     {
 	Coord coord = id2Coord(node_id);
 
@@ -149,7 +149,7 @@ vector < vector < double > > GlobalStats::getMaxDelayMtx()
 {
     vector < vector < double > > mtx;
 
-    assert(GlobalParams::topology == TOPOLOGY_MESH); 
+    assert(GlobalParams::topology == TOPOLOGY_MESH || GlobalParams::topology == TOPOLOGY_TORUS); 
 
     mtx.resize(GlobalParams::mesh_dim_y);
     for (int y = 0; y < GlobalParams::mesh_dim_y; y++)
@@ -212,7 +212,7 @@ unsigned int GlobalStats::getReceivedPackets()
 {
     unsigned int n = 0;
 
-    if (GlobalParams::topology == TOPOLOGY_MESH) 
+    if (GlobalParams::topology == TOPOLOGY_MESH || GlobalParams::topology == TOPOLOGY_TORUS) 
     {
     	for (int y = 0; y < GlobalParams::mesh_dim_y; y++)
 		for (int x = 0; x < GlobalParams::mesh_dim_x; x++)
@@ -230,7 +230,7 @@ unsigned int GlobalStats::getReceivedPackets()
 unsigned int GlobalStats::getReceivedFlits()
 {
     unsigned int n = 0;
-    if (GlobalParams::topology == TOPOLOGY_MESH) 
+    if (GlobalParams::topology == TOPOLOGY_MESH || GlobalParams::topology == TOPOLOGY_TORUS) 
     {
 	for (int y = 0; y < GlobalParams::mesh_dim_y; y++)
 	    for (int x = 0; x < GlobalParams::mesh_dim_x; x++) {
@@ -256,7 +256,7 @@ unsigned int GlobalStats::getReceivedFlits()
 
 double GlobalStats::getThroughput()
 {
-    if (GlobalParams::topology == TOPOLOGY_MESH) 
+    if (GlobalParams::topology == TOPOLOGY_MESH || GlobalParams::topology == TOPOLOGY_TORUS) 
     {
 	int number_of_ip = GlobalParams::mesh_dim_x * GlobalParams::mesh_dim_y;
 	return (double)getAggregatedThroughput()/(double)(number_of_ip);
@@ -277,7 +277,7 @@ double GlobalStats::getActiveThroughput()
     unsigned int n = 0;
     unsigned int trf = 0;
     unsigned int rf ;
-    if (GlobalParams::topology == TOPOLOGY_MESH) 
+    if (GlobalParams::topology == TOPOLOGY_MESH || GlobalParams::topology == TOPOLOGY_TORUS) 
     {
 	for (int y = 0; y < GlobalParams::mesh_dim_y; y++)
 	    for (int x = 0; x < GlobalParams::mesh_dim_x; x++) 
@@ -311,7 +311,7 @@ vector < vector < unsigned long > > GlobalStats::getRoutedFlitsMtx()
 {
 
     vector < vector < unsigned long > > mtx;
-    assert (GlobalParams::topology == TOPOLOGY_MESH); 
+    assert (GlobalParams::topology == TOPOLOGY_MESH || GlobalParams::topology == TOPOLOGY_TORUS);
 
     mtx.resize(GlobalParams::mesh_dim_y);
     for (int y = 0; y < GlobalParams::mesh_dim_y; y++)
@@ -349,7 +349,7 @@ double GlobalStats::getDynamicPower()
     double power = 0.0;
 
     // Electric noc
-    if (GlobalParams::topology == TOPOLOGY_MESH) 
+    if (GlobalParams::topology == TOPOLOGY_MESH || GlobalParams::topology == TOPOLOGY_TORUS) 
     {
 	for (int y = 0; y < GlobalParams::mesh_dim_y; y++)
 	    for (int x = 0; x < GlobalParams::mesh_dim_x; x++)
@@ -392,7 +392,7 @@ double GlobalStats::getStaticPower()
 {
     double power = 0.0;
 
-    if (GlobalParams::topology == TOPOLOGY_MESH) 
+    if (GlobalParams::topology == TOPOLOGY_MESH || GlobalParams::topology == TOPOLOGY_TORUS) 
     {
     	for (int y = 0; y < GlobalParams::mesh_dim_y; y++)
 		for (int x = 0; x < GlobalParams::mesh_dim_x; x++)
@@ -434,7 +434,7 @@ void GlobalStats::showStats(std::ostream & out, bool detailed)
 {
     if (detailed) 
     {
-	if (GlobalParams::topology == TOPOLOGY_MESH)
+	if (GlobalParams::topology == TOPOLOGY_MESH || GlobalParams::topology == TOPOLOGY_TORUS)
     { 
 	out << endl << "detailed = [" << endl;
 
@@ -488,7 +488,7 @@ void GlobalStats::showStats(std::ostream & out, bool detailed)
 
 #ifdef DEBUG
 
-    if (GlobalParams::topology == TOPOLOGY_MESH)
+    if (GlobalParams::topology == TOPOLOGY_MESH || GlobalParams::topology == TOPOLOGY_TORUS)
     {
 	for (int y = 0; y < GlobalParams::mesh_dim_y; y++)
 	    for (int x = 0; x < GlobalParams::mesh_dim_x; x++)
@@ -626,7 +626,7 @@ void GlobalStats::showPowerBreakDown(std::ostream & out)
     map<string,double> power_dynamic;
     map<string,double> power_static;
 
-    if (GlobalParams::topology == TOPOLOGY_MESH) 
+    if (GlobalParams::topology == TOPOLOGY_MESH || GlobalParams::topology == TOPOLOGY_TORUS) 
     {
 	for (int y = 0; y < GlobalParams::mesh_dim_y; y++)
 	    for (int x = 0; x < GlobalParams::mesh_dim_x; x++)
@@ -672,7 +672,7 @@ void GlobalStats::showBufferStats(std::ostream & out)
   out << "Router id\tBuffer N\t\tBuffer E\t\tBuffer S\t\tBuffer W\t\tBuffer L" << endl;
   out << "         \tMean\tMax\tMean\tMax\tMean\tMax\tMean\tMax\tMean\tMax" << endl;
   
-  if (GlobalParams::topology == TOPOLOGY_MESH) 
+  if (GlobalParams::topology == TOPOLOGY_MESH || GlobalParams::topology == TOPOLOGY_TORUS) 
     {
     	for (int y = 0; y < GlobalParams::mesh_dim_y; y++)
     	for (int x = 0; x < GlobalParams::mesh_dim_x; x++)
@@ -699,7 +699,7 @@ double GlobalStats::getReceivedIdealFlitRatio()
     int total_cycles;
     total_cycles= GlobalParams::simulation_time - GlobalParams::stats_warm_up_time;
     double ratio;
-    if (GlobalParams::topology == TOPOLOGY_MESH) 
+    if (GlobalParams::topology == TOPOLOGY_MESH || GlobalParams::topology == TOPOLOGY_TORUS) 
     {
 	ratio = getReceivedFlits() /(GlobalParams::packet_injection_rate * (GlobalParams::min_packet_size +
 		    GlobalParams::max_packet_size)/2 * total_cycles * GlobalParams::mesh_dim_y * GlobalParams::mesh_dim_x);

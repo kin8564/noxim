@@ -33,7 +33,8 @@ using namespace std;
 #define DIRECTION_HUB_RELAY     5000
 #define DIRECTION_WIRELESS    747
 
-#define MAX_VIRTUAL_CHANNELS	8
+// #define MAX_VIRTUAL_CHANNELS	8
+#define MAX_VIRTUAL_CHANNELS	16
 #define DEFAULT_VC 		0
 
 #define RT_AVAILABLE 1
@@ -49,6 +50,7 @@ using namespace std;
 
 //Topologies
 #define TOPOLOGY_MESH          "MESH"
+#define TOPOLOGY_TORUS         "TORUS"
 //Delta Networks Topologies
 #define TOPOLOGY_BASELINE      "BASELINE"
 #define TOPOLOGY_BUTTERFLY     "BUTTERFLY"

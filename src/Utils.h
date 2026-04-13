@@ -171,7 +171,8 @@ inline void sc_trace(sc_trace_file * &tf, const ChannelStatus & bs, string & nam
 inline Coord id2Coord(int id)
 {
     Coord coord;
-    if (GlobalParams::topology == TOPOLOGY_MESH)
+    if (GlobalParams::topology == TOPOLOGY_MESH ||
+        GlobalParams::topology == TOPOLOGY_TORUS)
     {
         coord.x = id % GlobalParams::mesh_dim_x;
         coord.y = id / GlobalParams::mesh_dim_x;
@@ -195,7 +196,8 @@ inline Coord id2Coord(int id)
 inline int coord2Id(const Coord & coord)
 {
     int id;
-    if (GlobalParams::topology == TOPOLOGY_MESH)
+    if (GlobalParams::topology == TOPOLOGY_MESH ||
+        GlobalParams::topology == TOPOLOGY_TORUS)
     {
         id = (coord.y * GlobalParams::mesh_dim_x) + coord.x;
         assert(id < GlobalParams::mesh_dim_x * GlobalParams::mesh_dim_y);

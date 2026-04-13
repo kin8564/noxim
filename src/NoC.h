@@ -99,6 +99,8 @@ SC_MODULE(NoC)
 	if (GlobalParams::topology == TOPOLOGY_MESH)
 	    // Build the Mesh
 	    buildMesh();
+    else if (GlobalParams::topology == TOPOLOGY_TORUS)
+        buildTorus();
 	else if (GlobalParams::topology == TOPOLOGY_BUTTERFLY)
         buildButterfly(); 
 	else if (GlobalParams::topology == TOPOLOGY_BASELINE)
@@ -127,6 +129,7 @@ SC_MODULE(NoC)
   private:
 
     void buildMesh();
+    void buildTorus();
     void buildButterfly();
     void buildBaseline();
     void buildOmega();

@@ -316,7 +316,7 @@ void Router::perCycleUpdate()
 
 vector<int> Router::nextDeltaHops(RouteData rd) {
 
-	if (GlobalParams::topology == TOPOLOGY_MESH)
+	if (GlobalParams::topology == TOPOLOGY_MESH || GlobalParams::topology == TOPOLOGY_TORUS)
 	{
 		cout << "Mesh topologies are not supported for nextDeltaHops() ";
 		assert(false);
@@ -539,7 +539,7 @@ void Router::configure(const int _id,
     }
 
 
-    if (GlobalParams::topology == TOPOLOGY_MESH)
+    if (GlobalParams::topology == TOPOLOGY_MESH || GlobalParams::topology == TOPOLOGY_TORUS)
     {
 	int row = _id / GlobalParams::mesh_dim_x;
 	int col = _id % GlobalParams::mesh_dim_x;
@@ -583,7 +583,7 @@ int Router::reflexDirection(int direction) const
 
 int Router::getNeighborId(int _id, int direction) const
 {
-    assert(GlobalParams::topology == TOPOLOGY_MESH);
+    assert(GlobalParams::topology == TOPOLOGY_MESH || GlobalParams::topology == TOPOLOGY_TORUS);
 
     Coord my_coord = id2Coord(_id); 
 
