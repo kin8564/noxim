@@ -64,7 +64,7 @@ class Power {
     void selection(); 
     void crossBar(); 
     void r2hLink(); 
-    void r2rLink(); 
+    void r2rLink(int seam_class = 0); 
     void networkInterface();
 
     void leakageBufferRouter();
@@ -140,6 +140,10 @@ class Power {
 
     double link_r2r_pwr_d;
     double link_r2r_pwr_s;
+    double link_r2r_torus_wrap_pwr_d;
+    double link_r2r_torus_wrap_pwr_s;
+    double link_r2r_folded_pwr_d;
+    double link_r2r_folded_pwr_s;
     double link_r2h_pwr_s;
     double link_r2h_pwr_d;
 

@@ -54,7 +54,8 @@ void loadConfiguration() {
     //Mesh network params
     if (GlobalParams::topology == TOPOLOGY_MESH      ||
         GlobalParams::topology == TOPOLOGY_TORUS     ||
-        GlobalParams::topology == TOPOLOGY_FOLDED_TORUS
+        GlobalParams::topology == TOPOLOGY_FOLDED_TORUS)
+    {
         GlobalParams::mesh_dim_x = readParam<int>(config, "mesh_dim_x");
         GlobalParams::mesh_dim_y = readParam<int>(config, "mesh_dim_y");
     }
@@ -68,6 +69,8 @@ void loadConfiguration() {
     }
 
     GlobalParams::r2r_link_length = readParam<double>(config, "r2r_link_length");
+    GlobalParams::r2r_torus_wrap_link_length = readParam<double>(config, "r2r_torus_wrap_link_length", GlobalParams::r2r_link_length);
+    GlobalParams::r2r_folded_link_length = readParam<double>(config, "r2r_folded_link_length", GlobalParams::r2r_link_length);
     GlobalParams::r2h_link_length = readParam<double>(config, "r2h_link_length");
     GlobalParams::buffer_depth = readParam<int>(config, "buffer_depth");
     GlobalParams::flit_size = readParam<int>(config, "flit_size");
@@ -219,7 +222,6 @@ void showHelp(char selfname[])
          << "\t-routing TYPE\t\tSet the routing algorithm to one of the following:" << endl
          << "\t\tXY\t\tXY routing algorithm" << endl
          << "\t\tXY_TORUS\t\tXY routing algorithm for torus topology" << endl
-         << "\t\tXY_FOLDED_TORUS\t\tXY routing algorithm for folded torus topology" << endl
          << "\t\tWEST_FIRST\tWest-First routing algorithm" << endl
          << "\t\tNORTH_LAST\tNorth-Last routing algorithm" << endl
          << "\t\tNEGATIVE_FIRST\tNegative-First routing algorithm" << endl

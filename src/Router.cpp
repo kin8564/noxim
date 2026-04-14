@@ -223,7 +223,7 @@ void Router::txProcess()
 		      /* Power & Stats ------------------------------------------------- */
 		      if (o == DIRECTION_HUB) power.r2hLink();
 		      else
-			  power.r2rLink();
+			  power.r2rLink(getR2RSeamClass(o));
 
 		      power.bufferRouterPop();
 		      power.crossBar();
@@ -316,7 +316,8 @@ void Router::perCycleUpdate()
 
 vector<int> Router::nextDeltaHops(RouteData rd) {
 
-	if (GlobalParams::topology == TOPOLOGY_MESH || GlobalParams::topology == TOPOLOGY_TORUS)
+	if (GlobalParams::topology == TOPOLOGY_MESH || GlobalParams::topology == TOPOLOGY_TORUS
+			|| GlobalParams::topology == TOPOLOGY_FOLDED_TORUS)
 	{
 		cout << "Mesh topologies are not supported for nextDeltaHops() ";
 		assert(false);
@@ -538,8 +539,8 @@ void Router::configure(const int _id,
 	start_from_vc[i] = 0;
     }
 
-
-    if (GlobalParams::topology == TOPOLOGY_MESH || GlobalParams::topology == TOPOLOGY_TORUS)
+	// Disable non existing directions in the buffers (e.g., for mesh, disable NORTH buffer for nodes in the first row, etc.)
+    if (GlobalParams::topology == TOPOLOGY_MESH)
     {
 	int row = _id / GlobalParams::mesh_dim_x;
 	int col = _id % GlobalParams::mesh_dim_x;
@@ -583,30 +584,47 @@ int Router::reflexDirection(int direction) const
 
 int Router::getNeighborId(int _id, int direction) const
 {
-    assert(GlobalParams::topology == TOPOLOGY_MESH || GlobalParams::topology == TOPOLOGY_TORUS);
+    assert(GlobalParams::topology == TOPOLOGY_MESH || GlobalParams::topology == TOPOLOGY_TORUS
+			|| GlobalParams::topology == TOPOLOGY_FOLDED_TORUS);
 
     Coord my_coord = id2Coord(_id); 
 
     switch (direction) {
     case DIRECTION_NORTH:
-	if (my_coord.y == 0)
-	    return NOT_VALID;
-	my_coord.y--;
+	if (GlobalParams::topology == TOPOLOGY_MESH) {
+	    if (my_coord.y == 0)
+		return NOT_VALID;
+	    my_coord.y--;
+	} else {
+	    my_coord.y = (my_coord.y - 1 + GlobalParams::mesh_dim_y) % GlobalParams::mesh_dim_y;
+	}
 	break;
     case DIRECTION_SOUTH:
-	if (my_coord.y == GlobalParams::mesh_dim_y - 1)
-	    return NOT_VALID;
-	my_coord.y++;
+	if (GlobalParams::topology == TOPOLOGY_MESH) {
+	    if (my_coord.y == GlobalParams::mesh_dim_y - 1)
+		return NOT_VALID;
+	    my_coord.y++;
+	} else {
+	    my_coord.y = (my_coord.y + 1) % GlobalParams::mesh_dim_y;
+	}
 	break;
     case DIRECTION_EAST:
-	if (my_coord.x == GlobalParams::mesh_dim_x - 1)
-	    return NOT_VALID;
-	my_coord.x++;
+	if (GlobalParams::topology == TOPOLOGY_MESH) {
+	    if (my_coord.x == GlobalParams::mesh_dim_x - 1)
+		return NOT_VALID;
+	    my_coord.x++;
+	} else {
+	    my_coord.x = (my_coord.x + 1) % GlobalParams::mesh_dim_x;
+	}
 	break;
     case DIRECTION_WEST:
-	if (my_coord.x == 0)
-	    return NOT_VALID;
-	my_coord.x--;
+	if (GlobalParams::topology == TOPOLOGY_MESH) {
+	    if (my_coord.x == 0)
+		return NOT_VALID;
+	    my_coord.x--;
+	} else {
+	    my_coord.x = (my_coord.x - 1 + GlobalParams::mesh_dim_x) % GlobalParams::mesh_dim_x;
+	}
 	break;
     default:
 	LOG << "Direction not valid : " << direction;
@@ -616,6 +634,41 @@ int Router::getNeighborId(int _id, int direction) const
     int neighbor_id = coord2Id(my_coord);
 
     return neighbor_id;
+}
+
+int Router::getR2RSeamClass(int direction) const
+{
+	if (GlobalParams::topology != TOPOLOGY_TORUS &&
+		GlobalParams::topology != TOPOLOGY_FOLDED_TORUS)
+		return 0;
+
+	Coord my_coord = id2Coord(local_id);
+	bool seam = false;
+
+	switch (direction) {
+	case DIRECTION_NORTH:
+		seam = (my_coord.y == 0);
+		break;
+	case DIRECTION_SOUTH:
+		seam = (my_coord.y == GlobalParams::mesh_dim_y - 1);
+		break;
+	case DIRECTION_EAST:
+		seam = (my_coord.x == GlobalParams::mesh_dim_x - 1);
+		break;
+	case DIRECTION_WEST:
+		seam = (my_coord.x == 0);
+		break;
+	default:
+		return 0;
+	}
+
+	if (!seam)
+		return 0;
+
+	if (GlobalParams::topology == TOPOLOGY_TORUS)
+		return 1;
+
+	return 2;
 }
 
 bool Router::inCongestion()

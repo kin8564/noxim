@@ -60,6 +60,10 @@ Power::Power()
 
     link_r2r_pwr_d = 0.0;
     link_r2r_pwr_s = 0.0;
+    link_r2r_torus_wrap_pwr_d = 0.0;
+    link_r2r_torus_wrap_pwr_s = 0.0;
+    link_r2r_folded_pwr_d = 0.0;
+    link_r2r_folded_pwr_s = 0.0;
     link_r2h_pwr_s = 0.0;
     link_r2h_pwr_d = 0.0;
 
@@ -125,13 +129,21 @@ void Power::configureRouter(int link_width,
     // Router has both type of links
     double length_r2h = GlobalParams::r2h_link_length;
     double length_r2r = GlobalParams::r2r_link_length;
+    double length_r2r_torus_wrap = GlobalParams::r2r_torus_wrap_link_length;
+    double length_r2r_folded = GlobalParams::r2r_folded_link_length;
     
     assert(GlobalParams::power_configuration.linkBitLinePowerConfig.find(length_r2r)!=GlobalParams::power_configuration.linkBitLinePowerConfig.end());
+    assert(GlobalParams::power_configuration.linkBitLinePowerConfig.find(length_r2r_torus_wrap)!=GlobalParams::power_configuration.linkBitLinePowerConfig.end());
+    assert(GlobalParams::power_configuration.linkBitLinePowerConfig.find(length_r2r_folded)!=GlobalParams::power_configuration.linkBitLinePowerConfig.end());
     assert(GlobalParams::power_configuration.linkBitLinePowerConfig.find(length_r2h)!=GlobalParams::power_configuration.linkBitLinePowerConfig.end());
 
 
     link_r2r_pwr_s= W2J(link_width * GlobalParams::power_configuration.linkBitLinePowerConfig[length_r2r].first);
     link_r2r_pwr_d= link_width * GlobalParams::power_configuration.linkBitLinePowerConfig[length_r2r].second;
+    link_r2r_torus_wrap_pwr_s = W2J(link_width * GlobalParams::power_configuration.linkBitLinePowerConfig[length_r2r_torus_wrap].first);
+    link_r2r_torus_wrap_pwr_d = link_width * GlobalParams::power_configuration.linkBitLinePowerConfig[length_r2r_torus_wrap].second;
+    link_r2r_folded_pwr_s = W2J(link_width * GlobalParams::power_configuration.linkBitLinePowerConfig[length_r2r_folded].first);
+    link_r2r_folded_pwr_d = link_width * GlobalParams::power_configuration.linkBitLinePowerConfig[length_r2r_folded].second;
     link_r2h_pwr_s= W2J(link_width * GlobalParams::power_configuration.linkBitLinePowerConfig[length_r2h].first);
     link_r2h_pwr_d= link_width * GlobalParams::power_configuration.linkBitLinePowerConfig[length_r2h].second;
 }
@@ -319,9 +331,14 @@ void Power::crossBar()
     power_dynamic.breakdown[CROSSBAR_PWR_D].value +=crossbar_pwr_d;
 }
 
-void Power::r2rLink()
+void Power::r2rLink(int seam_class)
 {
-    power_dynamic.breakdown[LINK_R2R_PWR_D].value +=link_r2r_pwr_d;
+    if (seam_class == 1)
+        power_dynamic.breakdown[LINK_R2R_PWR_D].value += link_r2r_torus_wrap_pwr_d;
+    else if (seam_class == 2)
+        power_dynamic.breakdown[LINK_R2R_PWR_D].value += link_r2r_folded_pwr_d;
+    else
+        power_dynamic.breakdown[LINK_R2R_PWR_D].value += link_r2r_pwr_d;
 }
 
 void Power::r2hLink()

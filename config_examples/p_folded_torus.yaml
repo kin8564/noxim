@@ -30,7 +30,6 @@ n_virtual_channels: 1
 # Routing algorithms:
 #   XY
 #   XY_TORUS
-#   XY_FOLDED_TORUS
 #   DELTA
 #   WEST_FIRST
 #   NORTH_LAST
@@ -40,8 +39,11 @@ n_virtual_channels: 1
 #   TABLE_BASED
 # Each of the above labels should match a corresponding
 # implementation in the routingAlgorithms source code directory
-routing_algorithm: XY_FOLDED_TORUS
+routing_algorithm: XY_TORUS
 routing_table_filename: ""
+
+# length in mm of the folded seam router-to-router connection
+r2r_folded_link_length: 0.5
 
 # Routing specific parameters
 #   dyad_threshold: double

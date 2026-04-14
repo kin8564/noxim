@@ -22,6 +22,8 @@ int GlobalParams::mesh_dim_y;
 int GlobalParams::n_delta_tiles;
 
 double GlobalParams::r2r_link_length;
+double GlobalParams::r2r_torus_wrap_link_length;
+double GlobalParams::r2r_folded_link_length;
 double GlobalParams::r2h_link_length;
 int GlobalParams::buffer_depth;
 int GlobalParams::flit_size;

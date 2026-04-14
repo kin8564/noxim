@@ -24,6 +24,8 @@ flit_size: 32
 r2h_link_length: 2.0
 # lenght in mm of router to router connection
 r2r_link_length: 1.0
+# length in mm of torus wrap seam router-to-router connections
+r2r_torus_wrap_link_length: 3.0
 n_virtual_channels: 1
 
 # Routing algorithms:

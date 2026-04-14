@@ -151,6 +151,7 @@ struct GlobalParams {
     static int mesh_dim_y;
     static int n_delta_tiles;
     static double r2r_link_length;
+    static double r2r_torus_wrap_link_length;
     static double r2h_link_length;
     static int buffer_depth;
     static int flit_size;
@@ -162,6 +163,7 @@ struct GlobalParams {
     static double packet_injection_rate;
     static double probability_of_retransmission;
     static double locality;
+    static double r2r_folded_link_length;
     static string traffic_distribution;
     static string traffic_table_filename;
     static string traffic_hardcoded_filename;

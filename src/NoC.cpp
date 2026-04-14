@@ -2787,7 +2787,8 @@ void NoC::buildFoldedTorus() {
 Tile *NoC::searchNode(const int id) const
 {
 	if (GlobalParams::topology == TOPOLOGY_MESH ||
-		GlobalParams::topology == TOPOLOGY_TORUS) 
+		GlobalParams::topology == TOPOLOGY_TORUS ||
+		GlobalParams::topology == TOPOLOGY_FOLDED_TORUS) 
     {
 	for (int i = 0; i < GlobalParams::mesh_dim_x; i++)
 	    for (int j = 0; j < GlobalParams::mesh_dim_y; j++)
@@ -2806,7 +2807,9 @@ void NoC::asciiMonitor()
 	//
 	// asciishow proof-of-concept #1 free slots
 
-	if (GlobalParams::topology != TOPOLOGY_MESH)
+	if (GlobalParams::topology != TOPOLOGY_MESH &&
+		GlobalParams::topology != TOPOLOGY_TORUS &&
+		GlobalParams::topology != TOPOLOGY_FOLDED_TORUS)
 	{
 		cout << "Delta topologies are not supported for asciimonitor option!";
 		assert(false);
