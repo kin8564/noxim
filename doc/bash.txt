@@ -14,3 +14,5 @@ do echo "Running pir=$pir";
 done
 
 random numbers: 0.076 0.205 0.433 0.508 0.111 0.906 0.928 0.680 0.124 0.545
+
+./noxim -config ../config_examples/sop_unicast.yaml
