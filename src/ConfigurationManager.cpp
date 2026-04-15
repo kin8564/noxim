@@ -54,7 +54,8 @@ void loadConfiguration() {
     //Mesh network params
     if (GlobalParams::topology == TOPOLOGY_MESH      ||
         GlobalParams::topology == TOPOLOGY_TORUS     ||
-        GlobalParams::topology == TOPOLOGY_FOLDED_TORUS)
+        GlobalParams::topology == TOPOLOGY_FOLDED_TORUS ||
+        GlobalParams::topology == TOPOLOGY_OCTAGON)
     {
         GlobalParams::mesh_dim_x = readParam<int>(config, "mesh_dim_x");
         GlobalParams::mesh_dim_y = readParam<int>(config, "mesh_dim_y");
@@ -216,6 +217,7 @@ void showHelp(char selfname[])
          << "\t\tMESH\t\t2D Mesh" << endl
             << "\t\tTORUS\t\t2D Torus" << endl
             << "\t\tFOLDED_TORUS\t2D Folded Torus" << endl
+            << "\t\tOCTAGON\t8-tile octagon (ring + 4 chords)" << endl
          << "\t\tBUTTERFLY\tDelta network Butterfly (radix 2)" << endl
          << "\t\tBASELINE\tDelta network Baseline" << endl
          << "\t\tOMEGA\t\tDelta network Omega" << endl
@@ -226,6 +228,7 @@ void showHelp(char selfname[])
          << "\t\tNORTH_LAST\tNorth-Last routing algorithm" << endl
          << "\t\tNEGATIVE_FIRST\tNegative-First routing algorithm" << endl
          << "\t\tODD_EVEN\tOdd-Even routing algorithm" << endl
+         << "\t\tOCTAGON\tDeterministic shortest-path routing for OCTAGON topology" << endl
          << "\t\tDYAD T\t\tDyAD routing algorithm with threshold T" << endl
          << "\t\tTABLE_BASED FILENAME\tRouting Table Based routing algorithm with table in the specified file" << endl
          << "\t-sel TYPE\t\tSet the selection strategy to one of the following:" << endl
@@ -289,7 +292,8 @@ void showConfig()
 void checkConfiguration()
 {
 	if (GlobalParams::topology==TOPOLOGY_MESH || GlobalParams::topology==TOPOLOGY_TORUS 
-        || GlobalParams::topology==TOPOLOGY_FOLDED_TORUS)
+        || GlobalParams::topology==TOPOLOGY_FOLDED_TORUS
+        || GlobalParams::topology==TOPOLOGY_OCTAGON)
 	{
 		if (GlobalParams::mesh_dim_x <= 1) {
 			cerr << "Error: dimx must be greater than 1" << endl;
@@ -300,6 +304,11 @@ void checkConfiguration()
 			cerr << "Error: dimy must be greater than 1" << endl;
 			exit(1);
 		}
+        if (GlobalParams::topology == TOPOLOGY_OCTAGON &&
+            (GlobalParams::mesh_dim_x * GlobalParams::mesh_dim_y != 8)) {
+            cerr << "Error: OCTAGON topology requires exactly 8 tiles (mesh_dim_x * mesh_dim_y = 8)" << endl;
+            exit(1);
+        }
 		if (GlobalParams::winoc_dst_hops>0)
 		{
 			cerr << "Error: winoc_dst_hops currently supported only in delta topologies" << endl;
@@ -376,7 +385,8 @@ void checkConfiguration()
 
     for (unsigned int i = 0; i < GlobalParams::hotspots.size(); i++) {
 	if (GlobalParams::topology==TOPOLOGY_MESH || GlobalParams::topology==TOPOLOGY_TORUS
-        || GlobalParams::topology==TOPOLOGY_FOLDED_TORUS){
+        || GlobalParams::topology==TOPOLOGY_FOLDED_TORUS
+        || GlobalParams::topology==TOPOLOGY_OCTAGON){
 		if (GlobalParams::hotspots[i].first >=
 		    GlobalParams::mesh_dim_x *
 		    GlobalParams::mesh_dim_y) {

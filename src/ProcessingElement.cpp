@@ -228,8 +228,8 @@ Packet ProcessingElement::trafficLocal()
 
 int ProcessingElement::findRandomDestination(int id, int hops)
 {
-    assert(GlobalParams::topology == TOPOLOGY_MESH || GlobalParams::topology == TOPOLOGY_TORUS
-           || GlobalParams::topology == TOPOLOGY_FOLDED_TORUS);
+        assert(GlobalParams::topology == TOPOLOGY_MESH || GlobalParams::topology == TOPOLOGY_TORUS
+            || GlobalParams::topology == TOPOLOGY_FOLDED_TORUS || GlobalParams::topology == TOPOLOGY_OCTAGON);
 
     int inc_y = rand()%2?-1:1;
     int inc_x = rand()%2?-1:1;
@@ -308,7 +308,8 @@ Packet ProcessingElement::trafficRandom()
 
     if (GlobalParams::topology == TOPOLOGY_MESH ||
         GlobalParams::topology == TOPOLOGY_TORUS ||
-        GlobalParams::topology == TOPOLOGY_FOLDED_TORUS)
+        GlobalParams::topology == TOPOLOGY_FOLDED_TORUS ||
+        GlobalParams::topology == TOPOLOGY_OCTAGON)
 	max_id = (GlobalParams::mesh_dim_x * GlobalParams::mesh_dim_y) - 1; //Mesh 
     else    // other delta topologies
 	max_id = GlobalParams::n_delta_tiles-1; 
@@ -329,8 +330,8 @@ Packet ProcessingElement::trafficRandom()
 		range_start += GlobalParams::hotspots[i].second;	// try next
 	}
 #ifdef DEADLOCK_AVOIDANCE
-	assert((GlobalParams::topology == TOPOLOGY_MESH || GlobalParams::topology == TOPOLOGY_TORUS
-           || GlobalParams::topology == TOPOLOGY_FOLDED_TORUS));
+    assert((GlobalParams::topology == TOPOLOGY_MESH || GlobalParams::topology == TOPOLOGY_TORUS
+       || GlobalParams::topology == TOPOLOGY_FOLDED_TORUS || GlobalParams::topology == TOPOLOGY_OCTAGON));
 	if (p.dst_id%2!=0)
 	{
 	    p.dst_id = (p.dst_id+1)%256;
@@ -362,7 +363,7 @@ Packet ProcessingElement::trafficTest()
 Packet ProcessingElement::trafficTranspose1()
 {
     assert(GlobalParams::topology == TOPOLOGY_MESH || GlobalParams::topology == TOPOLOGY_TORUS
-              || GlobalParams::topology == TOPOLOGY_FOLDED_TORUS);
+              || GlobalParams::topology == TOPOLOGY_FOLDED_TORUS || GlobalParams::topology == TOPOLOGY_OCTAGON);
     Packet p;
     p.src_id = local_id;
     Coord src, dst;
@@ -385,7 +386,7 @@ Packet ProcessingElement::trafficTranspose1()
 Packet ProcessingElement::trafficTranspose2()
 {
     assert(GlobalParams::topology == TOPOLOGY_MESH || GlobalParams::topology == TOPOLOGY_TORUS
-              || GlobalParams::topology == TOPOLOGY_FOLDED_TORUS);
+              || GlobalParams::topology == TOPOLOGY_FOLDED_TORUS || GlobalParams::topology == TOPOLOGY_OCTAGON);
     Packet p;
     p.src_id = local_id;
     Coord src, dst;

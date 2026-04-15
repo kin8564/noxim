@@ -17,6 +17,46 @@ inline int toggleKthBit(int n, int k)
     return (n ^ (1 << (k-1))); 
 }
 
+namespace {
+
+template <typename T>
+sc_signal<T> &dirSignal(sc_signal_NSWE<T> &signals, int direction)
+{
+	switch (direction) {
+	case DIRECTION_NORTH:
+		return signals.north;
+	case DIRECTION_EAST:
+		return signals.east;
+	case DIRECTION_SOUTH:
+		return signals.south;
+	case DIRECTION_WEST:
+		return signals.west;
+	default:
+		assert(false);
+		return signals.north;
+	}
+}
+
+template <typename T>
+sc_signal<T> &dirSignal(sc_signal_NSWEH<T> &signals, int direction)
+{
+	switch (direction) {
+	case DIRECTION_NORTH:
+		return signals.north;
+	case DIRECTION_EAST:
+		return signals.east;
+	case DIRECTION_SOUTH:
+		return signals.south;
+	case DIRECTION_WEST:
+		return signals.west;
+	default:
+		assert(false);
+		return signals.north;
+	}
+}
+
+}
+
 void NoC::buildCommon()
 {
 	token_ring = new TokenRing("tokenring");
@@ -2784,11 +2824,261 @@ void NoC::buildFoldedTorus() {
 
 }
 
+void NoC::buildOctagon()
+{
+	buildCommon();
+
+	const int dimX = GlobalParams::mesh_dim_x;
+	const int dimY = GlobalParams::mesh_dim_y;
+
+	req = new sc_signal_NSWEH<bool>*[dimX];
+	ack = new sc_signal_NSWEH<bool>*[dimX];
+	buffer_full_status = new sc_signal_NSWEH<TBufferFullStatus>*[dimX];
+	flit = new sc_signal_NSWEH<Flit>*[dimX];
+
+	free_slots = new sc_signal_NSWE<int>*[dimX];
+	nop_data = new sc_signal_NSWE<NoP_data>*[dimX];
+
+	for (int i = 0; i < dimX; i++) {
+		req[i] = new sc_signal_NSWEH<bool>[dimY];
+		ack[i] = new sc_signal_NSWEH<bool>[dimY];
+		buffer_full_status[i] = new sc_signal_NSWEH<TBufferFullStatus>[dimY];
+		flit[i] = new sc_signal_NSWEH<Flit>[dimY];
+
+		free_slots[i] = new sc_signal_NSWE<int>[dimY];
+		nop_data[i] = new sc_signal_NSWE<NoP_data>[dimY];
+	}
+
+	t = new Tile**[dimX];
+	for (int i = 0; i < dimX; i++) {
+		t[i] = new Tile*[dimY];
+	}
+
+	for (int j = 0; j < dimY; j++) {
+		for (int i = 0; i < dimX; i++) {
+			char tile_name[64];
+			Coord tile_coord;
+			tile_coord.x = i;
+			tile_coord.y = j;
+			int tile_id = coord2Id(tile_coord);
+			sprintf(tile_name, "Tile[%02d][%02d]_(#%d)", i, j, tile_id);
+			t[i][j] = new Tile(tile_name, tile_id);
+
+			t[i][j]->r->configure(tile_id,
+							  GlobalParams::stats_warm_up_time,
+							  GlobalParams::buffer_depth,
+							  grtable);
+			string power_routing = string(GlobalParams::routing_algorithm);
+			if (power_routing == "OCTAGON")
+				power_routing = "XY";
+			t[i][j]->r->power.configureRouter(GlobalParams::flit_size,
+								  GlobalParams::buffer_depth,
+								  GlobalParams::flit_size,
+								  power_routing,
+								  "default");
+
+			t[i][j]->pe->local_id = tile_id;
+
+			if (GlobalParams::traffic_distribution == TRAFFIC_TABLE_BASED) {
+				t[i][j]->pe->traffic_table = &gttable;
+				t[i][j]->pe->never_transmit = (gttable.occurrencesAsSource(t[i][j]->pe->local_id) == 0);
+			} else {
+				t[i][j]->pe->never_transmit = false;
+			}
+
+			if (GlobalParams::traffic_distribution == TRAFFIC_HARDCODED)
+				t[i][j]->pe->traffic_hardcoded = &ghtable;
+
+			t[i][j]->clock(clock);
+			t[i][j]->reset(reset);
+
+			t[i][j]->hub_req_rx(req[i][j].from_hub);
+			t[i][j]->hub_flit_rx(flit[i][j].from_hub);
+			t[i][j]->hub_ack_rx(ack[i][j].to_hub);
+			t[i][j]->hub_buffer_full_status_rx(buffer_full_status[i][j].to_hub);
+
+			t[i][j]->hub_req_tx(req[i][j].to_hub);
+			t[i][j]->hub_flit_tx(flit[i][j].to_hub);
+			t[i][j]->hub_ack_tx(ack[i][j].from_hub);
+			t[i][j]->hub_buffer_full_status_tx(buffer_full_status[i][j].from_hub);
+
+			map<int, int>::iterator it = GlobalParams::hub_for_tile.find(tile_id);
+			if (it != GlobalParams::hub_for_tile.end()) {
+				int hub_id = GlobalParams::hub_for_tile[tile_id];
+				int port = hub_connected_ports[hub_id]++;
+
+				hub[hub_id]->tile2port_mapping[t[i][j]->local_id] = port;
+
+				hub[hub_id]->req_rx[port](req[i][j].to_hub);
+				hub[hub_id]->flit_rx[port](flit[i][j].to_hub);
+				hub[hub_id]->ack_rx[port](ack[i][j].from_hub);
+				hub[hub_id]->buffer_full_status_rx[port](buffer_full_status[i][j].from_hub);
+
+				hub[hub_id]->flit_tx[port](flit[i][j].from_hub);
+				hub[hub_id]->req_tx[port](req[i][j].from_hub);
+				hub[hub_id]->ack_tx[port](ack[i][j].to_hub);
+				hub[hub_id]->buffer_full_status_tx[port](buffer_full_status[i][j].to_hub);
+			}
+		}
+	}
+
+	bool used[8][DIRECTIONS] = {{false}};
+
+	auto getTileById = [&](int id) -> Tile* {
+		Coord c = id2Coord(id);
+		return t[c.x][c.y];
+	};
+
+	auto reqRef = [&](int id, int direction) -> sc_signal<bool>& {
+		Coord c = id2Coord(id);
+		return dirSignal(req[c.x][c.y], direction);
+	};
+
+	auto ackRef = [&](int id, int direction) -> sc_signal<bool>& {
+		Coord c = id2Coord(id);
+		return dirSignal(ack[c.x][c.y], direction);
+	};
+
+	auto flitRef = [&](int id, int direction) -> sc_signal<Flit>& {
+		Coord c = id2Coord(id);
+		return dirSignal(flit[c.x][c.y], direction);
+	};
+
+	auto bfsRef = [&](int id, int direction) -> sc_signal<TBufferFullStatus>& {
+		Coord c = id2Coord(id);
+		return dirSignal(buffer_full_status[c.x][c.y], direction);
+	};
+
+	auto freeSlotsRef = [&](int id, int direction) -> sc_signal<int>& {
+		Coord c = id2Coord(id);
+		return dirSignal(free_slots[c.x][c.y], direction);
+	};
+
+	auto nopRef = [&](int id, int direction) -> sc_signal<NoP_data>& {
+		Coord c = id2Coord(id);
+		return dirSignal(nop_data[c.x][c.y], direction);
+	};
+
+	auto connectBidirectional = [&](int a, int dir_a, int b, int dir_b) {
+		Tile *ta = getTileById(a);
+		Tile *tb = getTileById(b);
+
+		sc_signal<bool> &req_ab = reqRef(a, dir_a);
+		tb->req_rx[dir_b](req_ab);
+		ta->req_tx[dir_a](req_ab);
+
+		sc_signal<Flit> &flit_ab = flitRef(a, dir_a);
+		tb->flit_rx[dir_b](flit_ab);
+		ta->flit_tx[dir_a](flit_ab);
+
+		sc_signal<bool> &ack_ab = ackRef(a, dir_a);
+		tb->ack_tx[dir_b](ack_ab);
+		ta->ack_rx[dir_a](ack_ab);
+
+		sc_signal<TBufferFullStatus> &bfs_ab = bfsRef(a, dir_a);
+		tb->buffer_full_status_tx[dir_b](bfs_ab);
+		ta->buffer_full_status_rx[dir_a](bfs_ab);
+
+		sc_signal<int> &fs_ab = freeSlotsRef(a, dir_a);
+		ta->free_slots[dir_a](fs_ab);
+		tb->free_slots_neighbor[dir_b](fs_ab);
+
+		sc_signal<NoP_data> &nop_ab = nopRef(a, dir_a);
+		ta->NoP_data_out[dir_a](nop_ab);
+		tb->NoP_data_in[dir_b](nop_ab);
+
+		sc_signal<bool> &req_ba = reqRef(b, dir_b);
+		ta->req_rx[dir_a](req_ba);
+		tb->req_tx[dir_b](req_ba);
+
+		sc_signal<Flit> &flit_ba = flitRef(b, dir_b);
+		ta->flit_rx[dir_a](flit_ba);
+		tb->flit_tx[dir_b](flit_ba);
+
+		sc_signal<bool> &ack_ba = ackRef(b, dir_b);
+		ta->ack_tx[dir_a](ack_ba);
+		tb->ack_rx[dir_b](ack_ba);
+
+		sc_signal<TBufferFullStatus> &bfs_ba = bfsRef(b, dir_b);
+		ta->buffer_full_status_tx[dir_a](bfs_ba);
+		tb->buffer_full_status_rx[dir_b](bfs_ba);
+
+		sc_signal<int> &fs_ba = freeSlotsRef(b, dir_b);
+		tb->free_slots[dir_b](fs_ba);
+		ta->free_slots_neighbor[dir_a](fs_ba);
+
+		sc_signal<NoP_data> &nop_ba = nopRef(b, dir_b);
+		tb->NoP_data_out[dir_b](nop_ba);
+		ta->NoP_data_in[dir_a](nop_ba);
+
+		used[a][dir_a] = true;
+		used[b][dir_b] = true;
+	};
+
+	// Ring edges
+	connectBidirectional(0, DIRECTION_EAST, 1, DIRECTION_WEST);
+	connectBidirectional(1, DIRECTION_EAST, 2, DIRECTION_WEST);
+	connectBidirectional(2, DIRECTION_EAST, 3, DIRECTION_WEST);
+	connectBidirectional(3, DIRECTION_SOUTH, 7, DIRECTION_NORTH);
+	connectBidirectional(7, DIRECTION_WEST, 6, DIRECTION_EAST);
+	connectBidirectional(6, DIRECTION_WEST, 5, DIRECTION_EAST);
+	connectBidirectional(5, DIRECTION_WEST, 4, DIRECTION_EAST);
+	connectBidirectional(4, DIRECTION_NORTH, 0, DIRECTION_SOUTH);
+
+	// Additional chords to reach 12 bidirectional links
+	connectBidirectional(1, DIRECTION_SOUTH, 6, DIRECTION_NORTH);
+	connectBidirectional(2, DIRECTION_SOUTH, 5, DIRECTION_NORTH);
+	connectBidirectional(0, DIRECTION_WEST, 7, DIRECTION_EAST);
+	connectBidirectional(3, DIRECTION_NORTH, 4, DIRECTION_SOUTH);
+
+	NoP_data tmp_NoP;
+	tmp_NoP.sender_id = NOT_VALID;
+	for (int d = 0; d < DIRECTIONS; d++) {
+		tmp_NoP.channel_status_neighbor[d].free_slots = NOT_VALID;
+		tmp_NoP.channel_status_neighbor[d].available = false;
+	}
+
+	for (int id = 0; id < 8; id++) {
+		Tile *tile = getTileById(id);
+		for (int d = 0; d < DIRECTIONS; d++) {
+			if (used[id][d])
+				continue;
+
+			sc_signal<bool> &dummy_req = reqRef(id, d);
+			tile->req_tx[d](dummy_req);
+			tile->req_rx[d](dummy_req);
+
+			sc_signal<Flit> &dummy_flit = flitRef(id, d);
+			tile->flit_tx[d](dummy_flit);
+			tile->flit_rx[d](dummy_flit);
+
+			sc_signal<bool> &dummy_ack = ackRef(id, d);
+			tile->ack_tx[d](dummy_ack);
+			tile->ack_rx[d](dummy_ack);
+
+			sc_signal<TBufferFullStatus> &dummy_bfs = bfsRef(id, d);
+			tile->buffer_full_status_tx[d](dummy_bfs);
+			tile->buffer_full_status_rx[d](dummy_bfs);
+
+			sc_signal<int> &dummy_slots = freeSlotsRef(id, d);
+			dummy_slots.write(NOT_VALID);
+			tile->free_slots[d](dummy_slots);
+			tile->free_slots_neighbor[d](dummy_slots);
+
+			sc_signal<NoP_data> &dummy_nop = nopRef(id, d);
+			dummy_nop.write(tmp_NoP);
+			tile->NoP_data_out[d](dummy_nop);
+			tile->NoP_data_in[d](dummy_nop);
+		}
+	}
+}
+
 Tile *NoC::searchNode(const int id) const
 {
 	if (GlobalParams::topology == TOPOLOGY_MESH ||
 		GlobalParams::topology == TOPOLOGY_TORUS ||
-		GlobalParams::topology == TOPOLOGY_FOLDED_TORUS) 
+		GlobalParams::topology == TOPOLOGY_FOLDED_TORUS ||
+		GlobalParams::topology == TOPOLOGY_OCTAGON) 
     {
 	for (int i = 0; i < GlobalParams::mesh_dim_x; i++)
 	    for (int j = 0; j < GlobalParams::mesh_dim_y; j++)
@@ -2809,7 +3099,8 @@ void NoC::asciiMonitor()
 
 	if (GlobalParams::topology != TOPOLOGY_MESH &&
 		GlobalParams::topology != TOPOLOGY_TORUS &&
-		GlobalParams::topology != TOPOLOGY_FOLDED_TORUS)
+		GlobalParams::topology != TOPOLOGY_FOLDED_TORUS &&
+		GlobalParams::topology != TOPOLOGY_OCTAGON)
 	{
 		cout << "Delta topologies are not supported for asciimonitor option!";
 		assert(false);

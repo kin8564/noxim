@@ -317,7 +317,7 @@ void Router::perCycleUpdate()
 vector<int> Router::nextDeltaHops(RouteData rd) {
 
 	if (GlobalParams::topology == TOPOLOGY_MESH || GlobalParams::topology == TOPOLOGY_TORUS
-			|| GlobalParams::topology == TOPOLOGY_FOLDED_TORUS)
+			|| GlobalParams::topology == TOPOLOGY_FOLDED_TORUS || GlobalParams::topology == TOPOLOGY_OCTAGON)
 	{
 		cout << "Mesh topologies are not supported for nextDeltaHops() ";
 		assert(false);
@@ -585,13 +585,13 @@ int Router::reflexDirection(int direction) const
 int Router::getNeighborId(int _id, int direction) const
 {
     assert(GlobalParams::topology == TOPOLOGY_MESH || GlobalParams::topology == TOPOLOGY_TORUS
-			|| GlobalParams::topology == TOPOLOGY_FOLDED_TORUS);
+			|| GlobalParams::topology == TOPOLOGY_FOLDED_TORUS || GlobalParams::topology == TOPOLOGY_OCTAGON);
 
     Coord my_coord = id2Coord(_id); 
 
     switch (direction) {
     case DIRECTION_NORTH:
-	if (GlobalParams::topology == TOPOLOGY_MESH) {
+	if (GlobalParams::topology == TOPOLOGY_MESH || GlobalParams::topology == TOPOLOGY_OCTAGON) {
 	    if (my_coord.y == 0)
 		return NOT_VALID;
 	    my_coord.y--;
@@ -600,7 +600,7 @@ int Router::getNeighborId(int _id, int direction) const
 	}
 	break;
     case DIRECTION_SOUTH:
-	if (GlobalParams::topology == TOPOLOGY_MESH) {
+	if (GlobalParams::topology == TOPOLOGY_MESH || GlobalParams::topology == TOPOLOGY_OCTAGON) {
 	    if (my_coord.y == GlobalParams::mesh_dim_y - 1)
 		return NOT_VALID;
 	    my_coord.y++;
@@ -609,7 +609,7 @@ int Router::getNeighborId(int _id, int direction) const
 	}
 	break;
     case DIRECTION_EAST:
-	if (GlobalParams::topology == TOPOLOGY_MESH) {
+	if (GlobalParams::topology == TOPOLOGY_MESH || GlobalParams::topology == TOPOLOGY_OCTAGON) {
 	    if (my_coord.x == GlobalParams::mesh_dim_x - 1)
 		return NOT_VALID;
 	    my_coord.x++;
@@ -618,7 +618,7 @@ int Router::getNeighborId(int _id, int direction) const
 	}
 	break;
     case DIRECTION_WEST:
-	if (GlobalParams::topology == TOPOLOGY_MESH) {
+	if (GlobalParams::topology == TOPOLOGY_MESH || GlobalParams::topology == TOPOLOGY_OCTAGON) {
 	    if (my_coord.x == 0)
 		return NOT_VALID;
 	    my_coord.x--;

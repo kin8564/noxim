@@ -173,7 +173,8 @@ inline Coord id2Coord(int id)
     Coord coord;
     if (GlobalParams::topology == TOPOLOGY_MESH ||
         GlobalParams::topology == TOPOLOGY_TORUS ||
-        GlobalParams::topology == TOPOLOGY_FOLDED_TORUS)
+        GlobalParams::topology == TOPOLOGY_FOLDED_TORUS ||
+        GlobalParams::topology == TOPOLOGY_OCTAGON)
     {
         coord.x = id % GlobalParams::mesh_dim_x;
         coord.y = id / GlobalParams::mesh_dim_x;
@@ -199,7 +200,8 @@ inline int coord2Id(const Coord & coord)
     int id;
     if (GlobalParams::topology == TOPOLOGY_MESH ||
         GlobalParams::topology == TOPOLOGY_TORUS ||
-        GlobalParams::topology == TOPOLOGY_FOLDED_TORUS)
+        GlobalParams::topology == TOPOLOGY_FOLDED_TORUS ||
+        GlobalParams::topology == TOPOLOGY_OCTAGON)
     {
         id = (coord.y * GlobalParams::mesh_dim_x) + coord.x;
         assert(id < GlobalParams::mesh_dim_x * GlobalParams::mesh_dim_y);

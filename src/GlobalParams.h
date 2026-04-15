@@ -52,6 +52,7 @@ using namespace std;
 #define TOPOLOGY_MESH          "MESH"
 #define TOPOLOGY_TORUS         "TORUS"
 #define TOPOLOGY_FOLDED_TORUS  "FOLDED_TORUS"
+#define TOPOLOGY_OCTAGON       "OCTAGON"
 //Delta Networks Topologies
 #define TOPOLOGY_BASELINE      "BASELINE"
 #define TOPOLOGY_BUTTERFLY     "BUTTERFLY"
