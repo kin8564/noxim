@@ -2622,7 +2622,6 @@ void NoC::buildTorus() {
 
 }
 
-// TODO: This is currently the same as buildTorus.
 void NoC::buildFoldedTorus() {
     buildCommon();
 

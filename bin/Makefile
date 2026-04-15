@@ -31,6 +31,10 @@ CXXFLAGS := $(OPT) $(OTHER) $(DEBUG)
 INCDIR := -I$(SRCDIR) -isystem $(SYSTEMC)/include -I$(YAML)/include
 LIBDIR := -L$(SRCDIR) -L$(SYSTEMC_LIBS) -L$(YAML)/lib
 
+# Embed a runtime search path for the bundled SystemC shared library so the
+# binary keeps working even when the repo is moved between machines/users.
+RPATH  := -Wl,-rpath,'$$ORIGIN/$(SYSTEMC)/lib-linux64'
+
 LIBS := -lsystemc -lm -lyaml-cpp 
 
 SPACE := $(subst ,, )
@@ -39,7 +43,7 @@ VPATH := $(SRCDIR):$(subst $(SPACE),:,$(SUBDIRS))
 ##### RULES #####
 
 $(MODULE): $(OBJS)
-	$(CXX) $(LIBDIR) $^ $(LIBS) -o $@ 2>&1 | c++filt
+	$(CXX) $(LIBDIR) $(RPATH) $^ $(LIBS) -o $@ 2>&1 | c++filt
 
 $(OBJDIR)/%.o: %.cpp
 	@mkdir -p $(dir $@)
