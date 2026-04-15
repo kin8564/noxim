@@ -161,6 +161,8 @@ bool ProcessingElement::canShot(Packet & packet)
 		    packet = trafficLocal();
         else if (GlobalParams::traffic_distribution == TRAFFIC_ULOCAL)
 		    packet = trafficULocal();
+        else if (GlobalParams::traffic_distribution == TRAFFIC_LONG_DISTANCE)
+		    packet = trafficLongDistance();
         else {
             cout << "Invalid traffic distribution: " << GlobalParams::traffic_distribution << endl;
             exit(-1);
@@ -291,6 +293,45 @@ Packet ProcessingElement::trafficULocal()
 
     p.dst_id = findRandomDestination(local_id,target_hops);
 
+    p.timestamp = sc_time_stamp().to_double() / GlobalParams::clock_period_ps;
+    p.size = p.flit_left = getRandomSize();
+    p.vc_id = randInt(0,GlobalParams::n_virtual_channels-1);
+
+    return p;
+}
+
+Packet ProcessingElement::trafficLongDistance()
+{
+    assert(GlobalParams::topology == TOPOLOGY_MESH || GlobalParams::topology == TOPOLOGY_TORUS
+          || GlobalParams::topology == TOPOLOGY_FOLDED_TORUS || GlobalParams::topology == TOPOLOGY_OCTAGON);
+
+    Packet p;
+    p.src_id = local_id;
+
+    int max_id = (GlobalParams::mesh_dim_x * GlobalParams::mesh_dim_y);
+    int max_distance = (GlobalParams::mesh_dim_x - 1) + (GlobalParams::mesh_dim_y - 1);
+    int min_distance = std::max(1, (int)ceil(0.5 * max_distance));
+
+    vector<int> dst_set;
+    Coord src = id2Coord(local_id);
+
+    for (int i = 0; i < max_id; i++)
+    {
+        if (i == local_id)
+            continue;
+
+        Coord dst = id2Coord(i);
+        int distance = abs(src.x - dst.x) + abs(src.y - dst.y);
+
+        if (distance >= min_distance)
+            dst_set.push_back(i);
+    }
+
+    if (dst_set.empty())
+        return trafficRandom();
+
+    int i_rnd = rand() % dst_set.size();
+    p.dst_id = dst_set[i_rnd];
     p.timestamp = sc_time_stamp().to_double() / GlobalParams::clock_period_ps;
     p.size = p.flit_left = getRandomSize();
     p.vc_id = randInt(0,GlobalParams::n_virtual_channels-1);

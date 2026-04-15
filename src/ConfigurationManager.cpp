@@ -249,6 +249,7 @@ void showHelp(char selfname[])
          << "\t\tbitreversal\tBit-reversal traffic distribution" << endl
          << "\t\tbutterfly\tButterfly traffic distribution" << endl
          << "\t\tshuffle\t\tShuffle traffic distribution" << endl
+         << "\t\tlongdist\tRandom traffic biased toward long-distance destinations" << endl
          <<	"\t\ttable FILENAME\tTraffic Table Based traffic distribution with table in the specified file" << endl
          << "\t-hs ID P\t\tAdd node ID to hotspot nodes, with percentage P (0..1) (Only for 'random' traffic)" << endl
          << "\t-warmup N\t\tStart to collect statistics after N cycles" << endl
@@ -590,6 +591,9 @@ void parseCmdLine(int arg_num, char *arg_vet[])
 		else if (!strcmp(traffic, "ulocal"))
 		    GlobalParams::traffic_distribution =
 			TRAFFIC_ULOCAL;
+        else if (!strcmp(traffic, "longdist"))
+            GlobalParams::traffic_distribution =
+            TRAFFIC_LONG_DISTANCE;
 		else if (!strcmp(traffic, "table")) {
 		    GlobalParams::traffic_distribution =
 			TRAFFIC_TABLE_BASED;

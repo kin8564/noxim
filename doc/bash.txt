@@ -5,7 +5,7 @@ done
 
 for pir in 0.01 0.02 0.03 0.04 0.05 0.06 0.07 0.08 0.09 0.10; do 
 echo "Running pir=$pir";
-./noxim -config ../config_examples/sop_unicast.yaml -pir $pir poisson;
+./noxim -config ../config_examples/256_16h.yaml -pir $pir poisson -traffic longdist;
 done
 
 for pir in 0.01 0.02 0.03 0.04 0.05 0.06 0.07 0.08 0.09 0.10;
