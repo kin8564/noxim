@@ -1,4 +1,4 @@
-# Simple default config of a 4x4 mesh
+# Simple default config of a butterfly fat tree
 # Each parameter is overwritten when corresponding command line value is set
 #
 # NOC & WIRED CONFIGURATION
@@ -7,14 +7,17 @@
 # Topologies:
 #   MESH
 #   BUTTERFLY
+#   BFT
 #   BASELINE
 #   OMEGA
+#   OCTAGON
 #
-#   BUTTERFLY, BASELINE, and OMEGA are Delta Network topologies
-# topology: MESH
+#   BUTTERFLY, BFT, BASELINE, and OMEGA are Delta Network topologies
+topology: BFT
 # X and Y mesh sizes
 mesh_dim_x: 4
 mesh_dim_y: 4
+n_delta_tiles: 8
 # number of flits for each router buffer
 buffer_depth: 4
 # size of flits, in bits
@@ -37,7 +40,7 @@ n_virtual_channels: 1
 #   OCTAGON
 # Each of the above labels should match a corresponding
 # implementation in the routingAlgorithms source code directory
-routing_algorithm: XY
+routing_algorithm: DELTA
 routing_table_filename: ""
 
 # Routing specific parameters

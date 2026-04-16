@@ -105,6 +105,8 @@ SC_MODULE(NoC)
         buildFoldedTorus();
     else if (GlobalParams::topology == TOPOLOGY_OCTAGON)
         buildOctagon();
+    else if (GlobalParams::topology == TOPOLOGY_BFT)
+        buildBFT();
 	else if (GlobalParams::topology == TOPOLOGY_BUTTERFLY)
         buildButterfly(); 
 	else if (GlobalParams::topology == TOPOLOGY_BASELINE)
@@ -136,6 +138,7 @@ SC_MODULE(NoC)
     void buildTorus();
     void buildFoldedTorus();
     void buildOctagon();
+    void buildBFT();
     void buildButterfly();
     void buildBaseline();
     void buildOmega();
