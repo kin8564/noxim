@@ -5,7 +5,7 @@ done
 
 for pir in 0.01 0.02 0.03 0.04 0.05 0.06 0.07 0.08 0.09 0.10; do 
 echo "Running pir=$pir";
-./noxim -config ../config_examples/256_16h.yaml -pir $pir poisson -traffic longdist;
+./noxim -config ../config_examples/sop_unicast.yaml -pir $pir poisson -traffic longdist;
 done
 
 for pir in 0.01 0.02 0.03 0.04 0.05 0.06 0.07 0.08 0.09 0.10;
@@ -16,3 +16,7 @@ done
 random numbers: 0.076 0.205 0.433 0.508 0.111 0.906 0.928 0.680 0.124 0.545
 
 ./noxim -config ../config_examples/sop_unicast.yaml
+
+./noxim -config ../config_examples/sop_unicast.yaml -traffic broadcast
+
+./noxim -config ../config_examples/sop_unicast.yaml -traffic multicast -mcast_mask 0x00FF

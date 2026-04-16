@@ -41,7 +41,13 @@ void ProcessingElement::txProcess()
     if(GlobalParams::traffic_distribution != TRAFFIC_HARDCODED) {
 		Packet packet;
 		if (canShot(packet)) {
-			packet_queue.push(packet);
+            double now = sc_time_stamp().to_double() / GlobalParams::clock_period_ps;
+            if (GlobalParams::traffic_distribution == TRAFFIC_BROADCAST)
+                enqueueBroadcastPackets(now);
+            else if (GlobalParams::traffic_distribution == TRAFFIC_MULTICAST)
+                enqueueMulticastPackets(now);
+            else
+                packet_queue.push(packet);
 			transmittedAtPreviousCycle = true;
 		} else {
 			transmittedAtPreviousCycle = false;
@@ -111,6 +117,59 @@ Flit ProcessingElement::nextFlit()
     return flit;
 }
 
+void ProcessingElement::enqueuePacketForDestination(int dst_id, double now)
+{
+    Packet packet;
+    int vc = randInt(0,GlobalParams::n_virtual_channels-1);
+    packet.make(local_id, dst_id, vc, now, getRandomSize());
+    packet_queue.push(packet);
+}
+
+void ProcessingElement::enqueueBroadcastPackets(double now)
+{
+    int max_id;
+    if (GlobalParams::topology == TOPOLOGY_MESH ||
+        GlobalParams::topology == TOPOLOGY_TORUS ||
+        GlobalParams::topology == TOPOLOGY_FOLDED_TORUS ||
+        GlobalParams::topology == TOPOLOGY_OCTAGON)
+        max_id = GlobalParams::mesh_dim_x * GlobalParams::mesh_dim_y;
+    else
+        max_id = GlobalParams::n_delta_tiles;
+
+    for (int dst = 0; dst < max_id; dst++) {
+        if (dst == local_id)
+            continue;
+        enqueuePacketForDestination(dst, now);
+    }
+}
+
+void ProcessingElement::enqueueMulticastPackets(double now)
+{
+    int max_id;
+    if (GlobalParams::topology == TOPOLOGY_MESH ||
+        GlobalParams::topology == TOPOLOGY_TORUS ||
+        GlobalParams::topology == TOPOLOGY_FOLDED_TORUS ||
+        GlobalParams::topology == TOPOLOGY_OCTAGON)
+        max_id = GlobalParams::mesh_dim_x * GlobalParams::mesh_dim_y;
+    else
+        max_id = GlobalParams::n_delta_tiles;
+
+    bool use_default_mask = (GlobalParams::multicast_hub_mask == 0ULL);
+
+    for (int dst = 0; dst < max_id; dst++) {
+        if (dst == local_id)
+            continue;
+        if (!hasRadioHub(dst))
+            continue;
+
+        int hub_id = tile2Hub(dst);
+        bool selected = use_default_mask ? ((hub_id % 2) == 0)
+                                         : ((GlobalParams::multicast_hub_mask & (1ULL << hub_id)) != 0ULL);
+        if (selected)
+            enqueuePacketForDestination(dst, now);
+    }
+}
+
 bool ProcessingElement::canShot(Packet & packet)
 {
    // assert(false);
@@ -163,6 +222,10 @@ bool ProcessingElement::canShot(Packet & packet)
 		    packet = trafficULocal();
         else if (GlobalParams::traffic_distribution == TRAFFIC_LONG_DISTANCE)
 		    packet = trafficLongDistance();
+        else if (GlobalParams::traffic_distribution == TRAFFIC_BROADCAST)
+		    packet = trafficRandom();
+        else if (GlobalParams::traffic_distribution == TRAFFIC_MULTICAST)
+		    packet = trafficRandom();
         else {
             cout << "Invalid traffic distribution: " << GlobalParams::traffic_distribution << endl;
             exit(-1);

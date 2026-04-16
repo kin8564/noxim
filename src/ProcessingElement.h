@@ -62,6 +62,9 @@ SC_MODULE(ProcessingElement)
     Packet trafficLocal();	// Random with locality
     Packet trafficULocal();	// Random with locality
     Packet trafficLongDistance();	// Random with long-distance destination bias
+        void enqueueBroadcastPackets(double now);
+        void enqueueMulticastPackets(double now);
+        void enqueuePacketForDestination(int dst_id, double now);
 
     size_t traffic_cycle = 0;
     GlobalTrafficTable *traffic_table;	// Reference to the Global traffic Table

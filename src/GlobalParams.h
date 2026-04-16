@@ -79,6 +79,8 @@ using namespace std;
 #define TRAFFIC_LOCAL	       "TRAFFIC_LOCAL"
 #define TRAFFIC_ULOCAL	       "TRAFFIC_ULOCAL"
 #define TRAFFIC_LONG_DISTANCE  "TRAFFIC_LONG_DISTANCE"
+#define TRAFFIC_BROADCAST      "TRAFFIC_BROADCAST"
+#define TRAFFIC_MULTICAST      "TRAFFIC_MULTICAST"
 #define TRAFFIC_HARDCODED      "TRAFFIC_HARDCODED"
 
 // Verbosity levels
@@ -169,6 +171,7 @@ struct GlobalParams {
     static string traffic_distribution;
     static string traffic_table_filename;
     static string traffic_hardcoded_filename;
+    static unsigned long long multicast_hub_mask;
     static string config_filename;
     static string power_config_filename;
     static int clock_period_ps;
