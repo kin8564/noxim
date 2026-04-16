@@ -63,6 +63,7 @@ void loadConfiguration() {
 	//Delta network params
     if (GlobalParams::topology == TOPOLOGY_BASELINE  ||
         GlobalParams::topology == TOPOLOGY_BUTTERFLY ||
+        GlobalParams::topology == TOPOLOGY_BFT       ||
         GlobalParams::topology == TOPOLOGY_OMEGA      ) {
         //GlobalParams::mesh_dim_x = readParam<int>(config, "mesh_dim_x");
         //GlobalParams::mesh_dim_y = readParam<int>(config, "mesh_dim_y");
@@ -219,6 +220,7 @@ void showHelp(char selfname[])
             << "\t\tFOLDED_TORUS\t2D Folded Torus" << endl
             << "\t\tOCTAGON\t8-tile octagon (ring + 4 chords)" << endl
          << "\t\tBUTTERFLY\tDelta network Butterfly (radix 2)" << endl
+         << "\t\tBFT\t\tButterfly fat-tree topology" << endl
          << "\t\tBASELINE\tDelta network Baseline" << endl
          << "\t\tOMEGA\t\tDelta network Omega" << endl
          << "\t-routing TYPE\t\tSet the routing algorithm to one of the following:" << endl
@@ -329,17 +331,17 @@ void checkConfiguration()
 			}
 			x /= 2;
 		}
-		if (GlobalParams::routing_algorithm!="DELTA")
+        if (GlobalParams::routing_algorithm!="DELTA")
 		{
-			cerr << "Error: BUTTERFLY/OMEGA/BASELINE topologies only supported in DELTA routing algorithm " << endl;
+            cerr << "Error: BUTTERFLY/BFT/OMEGA/BASELINE topologies only supported in DELTA routing algorithm " << endl;
 			exit(1);
 		}
 	}
 
 	if (GlobalParams::winoc_dst_hops>0) {
-		if (GlobalParams::topology != TOPOLOGY_BUTTERFLY)
+        if (GlobalParams::topology != TOPOLOGY_BUTTERFLY && GlobalParams::topology != TOPOLOGY_BFT)
 		{
-			cerr << "Error: winoc_dst_hops currently supported only in BUTTERFLY topology" << endl;
+            cerr << "Error: winoc_dst_hops currently supported only in BUTTERFLY/BFT topology" << endl;
             exit(1);
         }
 		if (!GlobalParams::use_winoc)

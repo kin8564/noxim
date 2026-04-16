@@ -1,12 +1,23 @@
-# Simple config of a 16x16 mesh with 16 RadioHubs
+# Simple default config of a butterfly fat tree
 # Each parameter is overwritten when corresponding command line value is set
 #
 # NOC & WIRED CONFIGURATION
 #
 #
+# Topologies:
+#   MESH
+#   BUTTERFLY
+#   BFT
+#   BASELINE
+#   OMEGA
+#   OCTAGON
+#
+#   BUTTERFLY, BFT, BASELINE, and OMEGA are Delta Network topologies
+topology: BFT
 # X and Y mesh sizes
-mesh_dim_x: 16
-mesh_dim_y: 16
+mesh_dim_x: 4
+mesh_dim_y: 4
+n_delta_tiles: 8
 # number of flits for each router buffer
 buffer_depth: 4
 # size of flits, in bits
@@ -19,15 +30,17 @@ n_virtual_channels: 1
 
 # Routing algorithms:
 #   XY
+#   DELTA
 #   WEST_FIRST
 #   NORTH_LAST
 #   NEGATIVE_FIRST
 #   ODD_EVEN
 #   DYAD
 #   TABLE_BASED
+#   OCTAGON
 # Each of the above labels should match a corresponding
 # implementation in the routingAlgorithms source code directory
-routing_algorithm: XY
+routing_algorithm: DELTA
 routing_table_filename: ""
 
 # Routing specific parameters
@@ -48,16 +61,16 @@ selection_strategy: RANDOM
 Hubs:
     defaults:
     # channels from which Hub can receive/transmit
-        rx_radio_channels: [0,1,2,3,4,5,6,7]
-        tx_radio_channels: [0,1,2,3,4,5,6,7]
+        rx_radio_channels: [0]
+        tx_radio_channels: [0]
     # list of node tiles attached to the hub
         attached_nodes: []
     # size of buffers connecting the hub to tiles
         to_tile_buffer_size: 4
         from_tile_buffer_size: 4
     # size of antenna tx/rx
-        rx_buffer_size: 64
-        tx_buffer_size: 64
+        rx_buffer_size: 4
+        tx_buffer_size: 4
 
 # for each hub, the same parameters specified above can be customized
 # If not specified, the above default values will be used
@@ -67,57 +80,16 @@ Hubs:
 # sub-meshes
 
     0:
-        attached_nodes: [17, 18, 33, 34]
+      attached_nodes: [0,1,4,5]
 
     1:
-        attached_nodes: [21, 22, 37, 38]
+      attached_nodes: [2,3,6,7]
 
     2:
-        attached_nodes: [25, 26, 41, 42]
+      attached_nodes: [8,9,12,13]
 
     3:
-        attached_nodes: [29, 30, 45, 46]
-
-    4:
-        attached_nodes: [81, 82, 97, 98]
-
-    5:
-        attached_nodes: [85, 86, 101, 102]
-
-    6:
-        attached_nodes: [89, 90, 105, 106]
-
-    7:
-        attached_nodes: [93, 94, 109, 110]
-
-    8:
-        attached_nodes: [145, 146, 161, 162]
-
-    9:
-        attached_nodes: [149,150, 165, 166]
-
-    10:
-        attached_nodes: [153,154, 169, 170]
-
-    11:
-        attached_nodes: [157, 158, 173, 174]
-
-    12:
-        attached_nodes: [209, 210, 225, 226]
-
-    13:
-        attached_nodes: [213, 214, 229, 230]
-
-    14:
-        attached_nodes: [217, 218, 233, 234]
-
-    15:
-        attached_nodes: [221, 222, 237, 238]
-
-
-
-
-
+      attached_nodes: [10,11,14,15]
 
 # Transmission channels configuration
 # each channel modelizes the transmission over a given frequency that
@@ -142,10 +114,9 @@ RadioChannels:
     # who has the token, holds the packet until needed for
     # transmissions, until a max number of cycles is reached
         #[TOKEN_MAX_HOLD, max_hold_cycles]
-
         mac_policy: [TOKEN_PACKET]
 
-#
+
 # SIMULATION PARAMETERS
 #
 clock_period_ps: 1000
@@ -164,7 +135,7 @@ show_buffer_stats: false
 # Winoc
 # enable wireless, when false, all wireless channel configuration is
 # ignored
-use_winoc: true
+use_winoc: false
 # experimental power saving strategy
 use_wirxsleep: false
 
@@ -179,8 +150,8 @@ verbose_mode: VERBOSE_OFF
 trace_mode: false
 trace_filename: ""
 
-min_packet_size: 12
-max_packet_size: 12
+min_packet_size: 8
+max_packet_size: 8
 packet_injection_rate: 0.01
 probability_of_retransmission: 0.01
 

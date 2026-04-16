@@ -1,0 +1,29 @@
+	--------------------------------------------
+		Noxim - the NoC Simulator
+		(C) University of Catania
+	--------------------------------------------
+Catania V., Mineo A., Monteleone S., Palesi M., and Patti D. (2016) Cycle-Accurate Network on Chip Simulation with Noxim. ACM Trans. Model. Comput. Simul. 27, 1, Article 4 (August 2016), 25 pages. DOI: https://doi.org/10.1145/2953878
+
+
+Loading configuration from file "/home/kings/noxim/config_examples/256_16h_12channels.yaml"... Done
+Loading power configurations from file "/home/kings/noxim/bin/power.yaml"... Done
+Reset for 1000 cycles...  done! 
+ Now running for 10000 cycles...
+Noxim simulation completed. (11000 cycles executed)
+
+% Total received packets: 4573
+% Total received flits: 54867
+% Received/Ideal flits Ratio: 0.198448
+% Average wireless utilization: 0.234419
+% Global average delay (cycles): 2418.23
+% Max delay (cycles): 9790
+% Network throughput (flits/cycle): 6.09633
+% Average IP throughput (flits/cycle/IP): 0.0238138
+% Total energy (J): 0.000113986
+% 	Dynamic energy (J): 9.04928e-06
+% 	Static energy (J): 0.000104937
+
+
+        SystemC 2.3.1-Accellera --- Apr 12 2026 20:10:06
+        Copyright (c) 1996-2014 by all Contributors,
+        ALL RIGHTS RESERVED

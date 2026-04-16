@@ -824,6 +824,15 @@ void NoC::buildButterfly()
 
 }
 
+void NoC::buildBFT()
+{
+	// BFT currently reuses the butterfly switch fabric and delta routing
+	// model, but is exposed as a dedicated topology so configurations can
+	// select it explicitly and the implementation can evolve without
+	// changing user-facing configs.
+	buildButterfly();
+}
+
 void NoC::buildBaseline()
 {
 

@@ -56,6 +56,7 @@ using namespace std;
 //Delta Networks Topologies
 #define TOPOLOGY_BASELINE      "BASELINE"
 #define TOPOLOGY_BUTTERFLY     "BUTTERFLY"
+#define TOPOLOGY_BFT           "BFT"
 #define TOPOLOGY_OMEGA         "OMEGA"
 
 // Routing algorithms
