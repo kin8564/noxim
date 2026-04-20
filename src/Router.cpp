@@ -344,6 +344,7 @@ vector<int> Router::nextDeltaHops(RouteData rd) {
 	}
 	//Other delta topologies: Butterfly and baseline
 	else if ((GlobalParams::topology == TOPOLOGY_BUTTERFLY)||(GlobalParams::topology == TOPOLOGY_BFT)
+			||(GlobalParams::topology == TOPOLOGY_SPIN)
 			||(GlobalParams::topology == TOPOLOGY_BASELINE))
 	{
 		 c =  (current_node >>1);

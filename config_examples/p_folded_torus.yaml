@@ -8,11 +8,14 @@
 #   MESH
 #   TORUS
 #   FOLDED_TORUS
+#   OCTAGON
 #   BUTTERFLY
+#   BFT
+#   SPIN
 #   BASELINE
 #   OMEGA
 #
-#   BUTTERFLY, BASELINE, and OMEGA are Delta Network topologies
+#   BUTTERFLY, BFT, SPIN, BASELINE, and OMEGA are Delta Network topologies
 topology: FOLDED_TORUS
 # X and Y mesh sizes
 mesh_dim_x: 4
@@ -25,11 +28,14 @@ flit_size: 32
 r2h_link_length: 2.0
 # lenght in mm of router to router connection
 r2r_link_length: 1.0
+# length in mm of torus wrap seam router-to-router connections
+r2r_torus_wrap_link_length: 3.0
 n_virtual_channels: 1
 
 # Routing algorithms:
 #   XY
 #   XY_TORUS
+#   OCTAGON
 #   DELTA
 #   WEST_FIRST
 #   NORTH_LAST
@@ -125,7 +131,7 @@ clock_period_ps: 1000
 # duration of reset signal assertion, expressed in cycles
 reset_time: 1000
 # overal simulation lenght, expressed in cycles
-simulation_time: 10000
+simulation_time: 20000
 # collect stats after a given number of cycles
 stats_warm_up_time: 1000
 # power breakdown, nodes communication details

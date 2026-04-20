@@ -1,4 +1,4 @@
-# Simple default config of a butterfly fat tree
+# Simple default config of the SPIN delta topology
 # Each parameter is overwritten when corresponding command line value is set
 #
 # NOC & WIRED CONFIGURATION
@@ -16,7 +16,7 @@
 #   OMEGA
 #
 #   BUTTERFLY, BFT, SPIN, BASELINE, and OMEGA are Delta Network topologies
-topology: BFT
+topology: SPIN
 # X and Y mesh sizes
 mesh_dim_x: 4
 mesh_dim_y: 4

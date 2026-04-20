@@ -6,12 +6,16 @@
 #
 # Topologies:
 #   MESH
+#   TORUS
+#   FOLDED_TORUS
+#   OCTAGON
 #   BUTTERFLY
+#   BFT
+#   SPIN
 #   BASELINE
 #   OMEGA
-#   OCTAGON
 #
-#   BUTTERFLY, BASELINE, and OMEGA are Delta Network topologies
+#   BUTTERFLY, BFT, SPIN, BASELINE, and OMEGA are Delta Network topologies
 topology: OCTAGON
 # X and Y mesh sizes
 mesh_dim_x: 4
@@ -28,6 +32,8 @@ n_virtual_channels: 1
 
 # Routing algorithms:
 #   XY
+#   XY_TORUS
+#   OCTAGON
 #   DELTA
 #   WEST_FIRST
 #   NORTH_LAST
@@ -35,7 +41,6 @@ n_virtual_channels: 1
 #   ODD_EVEN
 #   DYAD
 #   TABLE_BASED
-#   OCTAGON
 # Each of the above labels should match a corresponding
 # implementation in the routingAlgorithms source code directory
 routing_algorithm: OCTAGON
@@ -78,16 +83,16 @@ Hubs:
 # sub-meshes
 
     0:
-            attached_nodes: [0,1,4,5]
+      attached_nodes: [0,1,4,5]
 
     1:
-            attached_nodes: [2,3,6,7]
+      attached_nodes: [2,3,6,7]
 
     2:
-            attached_nodes: []
+      attached_nodes: []
 
     3:
-            attached_nodes: []
+      attached_nodes: []
 
 # Transmission channels configuration
 # each channel modelizes the transmission over a given frequency that
@@ -121,7 +126,7 @@ clock_period_ps: 1000
 # duration of reset signal assertion, expressed in cycles
 reset_time: 1000
 # overal simulation lenght, expressed in cycles
-simulation_time: 10000
+simulation_time: 20000
 # collect stats after a given number of cycles
 stats_warm_up_time: 1000
 # power breakdown, nodes communication details

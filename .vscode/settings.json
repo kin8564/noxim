@@ -8,6 +8,8 @@
         "make": true,
         "gdb": true,
         "nm": true,
-        "awk": true
+        "awk": true,
+        "diff": true,
+        "sha256sum": true
     }
 }

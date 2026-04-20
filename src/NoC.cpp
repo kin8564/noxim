@@ -833,6 +833,14 @@ void NoC::buildBFT()
 	buildButterfly();
 }
 
+void NoC::buildSPIN()
+{
+	// Initial SPIN support intentionally shares the current butterfly
+	// implementation path so SPIN configs run while custom wiring is
+	// developed incrementally.
+	buildButterfly();
+}
+
 void NoC::buildBaseline()
 {
 

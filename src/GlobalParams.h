@@ -57,6 +57,7 @@ using namespace std;
 #define TOPOLOGY_BASELINE      "BASELINE"
 #define TOPOLOGY_BUTTERFLY     "BUTTERFLY"
 #define TOPOLOGY_BFT           "BFT"
+#define TOPOLOGY_SPIN          "SPIN"
 #define TOPOLOGY_OMEGA         "OMEGA"
 
 // Routing algorithms
