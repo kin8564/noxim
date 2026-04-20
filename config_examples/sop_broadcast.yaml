@@ -193,8 +193,14 @@ probability_of_retransmission: 0.01
 #   TRAFFIC_BIT_REVERSAL
 #   TRAFFIC_SHUFFLE
 #   TRAFFIC_BUTTERFLY
+#   TRAFFIC_BROADCAST
+#   TRAFFIC_MULTICAST
 #   TRAFFIC_HARDCODED
-traffic_distribution: TRAFFIC_RANDOM
+#   TRAFFIC_LONG_DISTANCE
+traffic_distribution: TRAFFIC_BROADCAST
+# used only by TRAFFIC_MULTICAST; each bit selects a destination hub id
+# e.g., 255 selects hubs 0-7
+multicast_hub_mask: 255
 # when traffic table based is specified, use the following
 # configuration file
 traffic_table_filename: "t.txt"

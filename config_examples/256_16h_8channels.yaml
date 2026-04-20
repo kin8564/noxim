@@ -164,7 +164,7 @@ show_buffer_stats: false
 # Winoc
 # enable wireless, when false, all wireless channel configuration is
 # ignored
-use_winoc: true
+use_winoc: false
 # experimental power saving strategy
 use_wirxsleep: false
 
@@ -193,8 +193,11 @@ probability_of_retransmission: 0.01
 #   TRAFFIC_BIT_REVERSAL
 #   TRAFFIC_SHUFFLE
 #   TRAFFIC_BUTTERFLY
+#   TRAFFIC_BROADCAST
+#   TRAFFIC_MULTICAST
 #   TRAFFIC_HARDCODED
-traffic_distribution: TRAFFIC_RANDOM
+#   TRAFFIC_LONG_DISTANCE
+traffic_distribution: TRAFFIC_LONG_DISTANCE
 # when traffic table based is specified, use the following
 # configuration file
 traffic_table_filename: "t.txt"

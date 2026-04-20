@@ -196,6 +196,7 @@ probability_of_retransmission: 0.01
 #   TRAFFIC_BROADCAST
 #   TRAFFIC_MULTICAST
 #   TRAFFIC_HARDCODED
+#   TRAFFIC_LONG_DISTANCE
 traffic_distribution: TRAFFIC_RANDOM
 # used only by TRAFFIC_MULTICAST; each bit selects a destination hub id
 # e.g., 255 selects hubs 0-7
