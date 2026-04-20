@@ -102,6 +102,7 @@ void loadConfiguration() {
     GlobalParams::use_winoc = readParam<bool>(config, "use_winoc");
     GlobalParams::winoc_dst_hops = readParam<int>(config, "winoc_dst_hops",0);
     GlobalParams::use_powermanager = readParam<bool>(config, "use_wirxsleep");
+    GlobalParams::use_wireless_backoff = readParam<bool>(config, "use_wireless_backoff", false);
     
 
     set<int> channelSet;

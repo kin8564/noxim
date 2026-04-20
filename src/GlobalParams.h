@@ -190,6 +190,7 @@ struct GlobalParams {
     static bool use_winoc;
     static int winoc_dst_hops;
     static bool use_powermanager;
+    static bool use_wireless_backoff;
     static ChannelConfig default_channel_configuration;
     static map<int, ChannelConfig> channel_configuration;
     static HubConfig default_hub_configuration;

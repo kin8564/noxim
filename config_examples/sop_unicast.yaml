@@ -4,6 +4,7 @@
 # NOC & WIRED CONFIGURATION
 #
 #
+topology: MESH
 # X and Y mesh sizes
 mesh_dim_x: 16
 mesh_dim_y: 16
@@ -142,10 +143,9 @@ RadioChannels:
     # who has the token, holds the packet until needed for
     # transmissions, until a max number of cycles is reached
         #[TOKEN_MAX_HOLD, max_hold_cycles]
-
         mac_policy: [TOKEN_PACKET]
 
-#
+
 # SIMULATION PARAMETERS
 #
 clock_period_ps: 1000
@@ -167,6 +167,8 @@ show_buffer_stats: false
 use_winoc: true
 # experimental power saving strategy
 use_wirxsleep: false
+# enable exponential retry backoff after wireless receive/initiator errors
+use_wireless_backoff: false
 
 # Verbosity level:
 #   VERBOSE_OFF

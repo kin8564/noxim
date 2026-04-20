@@ -55,6 +55,7 @@ bool GlobalParams::show_buffer_stats;
 bool GlobalParams::use_winoc;
 int GlobalParams::winoc_dst_hops;
 bool GlobalParams::use_powermanager;
+bool GlobalParams::use_wireless_backoff;
 ChannelConfig GlobalParams::default_channel_configuration;
 map<int, ChannelConfig> GlobalParams::channel_configuration;
 HubConfig GlobalParams::default_hub_configuration;
