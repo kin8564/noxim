@@ -257,6 +257,7 @@ void showHelp(char selfname[])
          << "\t\tshuffle\t\tShuffle traffic distribution" << endl
          << "\t\tlongdist\tRandom traffic biased toward long-distance destinations" << endl
          << "\t\tbroadcast\tSource sends to all destinations (except itself)" << endl
+         << "\t\tbcast_longdist\tBroadcast limited to long-distance destinations" << endl
          << "\t\tmulticast\tSource sends to destinations under selected hub mask" << endl
          <<	"\t\ttable FILENAME\tTraffic Table Based traffic distribution with table in the specified file" << endl
          << "\t-mcast_mask N\t\tSet multicast hub bitmask (supports decimal/hex, e.g. 0x00FF)" << endl
@@ -607,6 +608,9 @@ void parseCmdLine(int arg_num, char *arg_vet[])
         else if (!strcmp(traffic, "broadcast"))
             GlobalParams::traffic_distribution =
             TRAFFIC_BROADCAST;
+        else if (!strcmp(traffic, "bcast_longdist"))
+            GlobalParams::traffic_distribution =
+            TRAFFIC_BROADCAST_LONG_DISTANCE;
         else if (!strcmp(traffic, "multicast"))
             GlobalParams::traffic_distribution =
             TRAFFIC_MULTICAST;

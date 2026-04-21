@@ -63,6 +63,7 @@ SC_MODULE(ProcessingElement)
     Packet trafficULocal();	// Random with locality
     Packet trafficLongDistance();	// Random with long-distance destination bias
         void enqueueBroadcastPackets(double now);
+        void enqueueBroadcastLongDistancePackets(double now);
         void enqueueMulticastPackets(double now);
         void enqueuePacketForDestination(int dst_id, double now);
 

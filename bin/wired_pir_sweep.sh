@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # SOP Wired PIR Sweep Test Script
-# Tests: sop_wired topology with long-distance traffic distribution
+# Tests: sop_wired topology with random traffic distribution
 # PIR sweep: 0.01 to 0.1 (by 0.01 step)
 # Runs: 10 simulations per configuration with different seeds
 # Metrics: Throughput, Delay, Energy, Wireless Utilization
@@ -11,7 +11,8 @@ set -e
 # Configuration
 TOPOLOGY="256_16h_8channels"
 VC_VALUES=(8)
-PIR_VALUES=(0.01 0.02 0.03 0.04 0.05 0.06 0.07 0.08 0.09 0.10)
+# PIR_VALUES=(0.01 0.02 0.03 0.04 0.05 0.06 0.07 0.08 0.09 0.10)
+PIR_VALUES=(0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0)
 NUM_RUNS=10
 RESULTS_DIR="./wireless_results"
 TIMESTAMP=$(date +%Y%m%d_%H%M%S)
@@ -66,7 +67,7 @@ echo "================================================"
 echo "SOP Wired Topology PIR Sweep Test"
 echo "================================================"
 echo "Configuration: $config_file"
-echo "Traffic Distribution: TRAFFIC_LONG_DISTANCE"
+echo "Traffic Distribution: TRAFFIC_RANDOM"
 echo "VC Values: ${VC_VALUES[@]}"
 echo "PIR Values: ${PIR_VALUES[@]}"
 echo "Number of simulations per configuration: $NUM_RUNS"

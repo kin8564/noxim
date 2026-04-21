@@ -44,6 +44,8 @@ void ProcessingElement::txProcess()
             double now = sc_time_stamp().to_double() / GlobalParams::clock_period_ps;
             if (GlobalParams::traffic_distribution == TRAFFIC_BROADCAST)
                 enqueueBroadcastPackets(now);
+            else if (GlobalParams::traffic_distribution == TRAFFIC_BROADCAST_LONG_DISTANCE)
+                enqueueBroadcastLongDistancePackets(now);
             else if (GlobalParams::traffic_distribution == TRAFFIC_MULTICAST)
                 enqueueMulticastPackets(now);
             else
@@ -143,6 +145,27 @@ void ProcessingElement::enqueueBroadcastPackets(double now)
     }
 }
 
+void ProcessingElement::enqueueBroadcastLongDistancePackets(double now)
+{
+    assert(GlobalParams::topology == TOPOLOGY_MESH || GlobalParams::topology == TOPOLOGY_TORUS
+          || GlobalParams::topology == TOPOLOGY_FOLDED_TORUS || GlobalParams::topology == TOPOLOGY_OCTAGON);
+
+    int max_id = GlobalParams::mesh_dim_x * GlobalParams::mesh_dim_y;
+    int max_distance = (GlobalParams::mesh_dim_x - 1) + (GlobalParams::mesh_dim_y - 1);
+    int min_distance = std::max(1, (int)ceil(0.5 * max_distance));
+    Coord src = id2Coord(local_id);
+
+    for (int dst = 0; dst < max_id; dst++) {
+        if (dst == local_id)
+            continue;
+
+        Coord dst_coord = id2Coord(dst);
+        int distance = abs(src.x - dst_coord.x) + abs(src.y - dst_coord.y);
+        if (distance >= min_distance)
+            enqueuePacketForDestination(dst, now);
+    }
+}
+
 void ProcessingElement::enqueueMulticastPackets(double now)
 {
     int max_id;
@@ -223,6 +246,8 @@ bool ProcessingElement::canShot(Packet & packet)
         else if (GlobalParams::traffic_distribution == TRAFFIC_LONG_DISTANCE)
 		    packet = trafficLongDistance();
         else if (GlobalParams::traffic_distribution == TRAFFIC_BROADCAST)
+		    packet = trafficRandom();
+        else if (GlobalParams::traffic_distribution == TRAFFIC_BROADCAST_LONG_DISTANCE)
 		    packet = trafficRandom();
         else if (GlobalParams::traffic_distribution == TRAFFIC_MULTICAST)
 		    packet = trafficRandom();

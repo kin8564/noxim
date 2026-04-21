@@ -1,8 +1,7 @@
 #!/bin/bash
 
-# SOP Unicast PIR Sweep Test Script
-# Tests: sop_unicast topology with random traffic distribution
-# VC sweep: 8
+# SOP Broadcast PIR Sweep Test Script
+# Tests: sop_broadcast topology with random traffic distribution
 # PIR sweep: 0.01 to 0.1 (by 0.01 step)
 # Runs: 10 simulations per configuration with different seeds
 # Metrics: Throughput, Delay, Energy, Wireless Utilization
@@ -10,14 +9,16 @@
 set -e
 
 # Configuration
-TOPOLOGY="sop_unicast"
+TOPOLOGY="sop_broadcast"
 VC_VALUES=(8)
-# PIR_VALUES=(0.01 0.02 0.03 0.04 0.05 0.06 0.07 0.08 0.09 0.10)
-PIR_VALUES=(0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0)
+PIR_VALUES=(0.01 0.02 0.03 0.04 0.05 0.06 0.07 0.08 0.09 0.10)
 NUM_RUNS=10
-RESULTS_DIR="./vc_sweep_results"
 TIMESTAMP=$(date +%Y%m%d_%H%M%S)
-RESULTS_FILE="${RESULTS_DIR}/sop_unicast_vc_pir_sweep_${TIMESTAMP}.csv"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
+NOXIM_BIN="${SCRIPT_DIR}/noxim"
+RESULTS_DIR="${SCRIPT_DIR}/wireless_results"
+RESULTS_FILE="${RESULTS_DIR}/sop_broadcast_distance_pir_sweep_${TIMESTAMP}.csv"
 
 # Create results directory
 mkdir -p "${RESULTS_DIR}"
@@ -28,10 +29,10 @@ echo "VC,PIR,Run,Throughput_flits_cycle_IP,Delay_cycles,Energy_J,Wireless_Utiliz
 # Function to extract metrics from noxim output
 extract_metrics() {
     local output=$1
-    local throughput=$(echo "$output" | grep "% Average IP throughput" | awk '{print $NF}' | sed 's/[^0-9.e-]*//g')
-    local delay=$(echo "$output" | grep "% Global average delay" | awk '{print $NF}' | sed 's/[^0-9.e-]*//g')
-    local energy=$(echo "$output" | grep "% Total energy" | awk '{print $NF}' | sed 's/[^0-9.e-]*//g')
-    local wireless_util=$(echo "$output" | grep "% Average wireless utilization" | awk '{print $NF}' | sed 's/[^0-9.e-]*//g')
+    local throughput=$(echo "$output" | grep "% Average IP throughput" | awk '{print $NF}' | sed 's/[^0-9.e-]*//g' || true)
+    local delay=$(echo "$output" | grep "% Global average delay" | awk '{print $NF}' | sed 's/[^0-9.e-]*//g' || true)
+    local energy=$(echo "$output" | grep "% Total energy" | awk '{print $NF}' | sed 's/[^0-9.e-]*//g' || true)
+    local wireless_util=$(echo "$output" | grep "% Average wireless utilization" | awk '{print $NF}' | sed 's/[^0-9.e-]*//g' || true)
     echo "$throughput|$delay|$energy|$wireless_util"
 }
 
@@ -43,20 +44,35 @@ calculate_averages() {
     local wireless_sum=0
     local count=$1
     shift
+    local valid_runs=0
     
     for metric_line in "$@"; do
+        if [ -z "$metric_line" ]; then
+            continue
+        fi
         IFS='|' read throughput delay energy wireless <<< "$metric_line"
         throughput_sum=$(echo "$throughput_sum + $throughput" | bc -l)
         delay_sum=$(echo "$delay_sum + $delay" | bc -l)
         energy_sum=$(echo "$energy_sum + $energy" | bc -l)
         wireless_sum=$(echo "$wireless_sum + $wireless" | bc -l)
+        valid_runs=$((valid_runs + 1))
     done
     
-    echo "$(echo "scale=8; $throughput_sum / $count" | bc -l)|$(echo "scale=6; $delay_sum / $count" | bc -l)|$(echo "scale=10; $energy_sum / $count" | bc -l)|$(echo "scale=8; $wireless_sum / $count" | bc -l)"
+    if [ "$valid_runs" -eq 0 ]; then
+        echo "0|0|0|0"
+        return
+    fi
+
+    echo "$(echo "scale=8; $throughput_sum / $valid_runs" | bc -l)|$(echo "scale=6; $delay_sum / $valid_runs" | bc -l)|$(echo "scale=10; $energy_sum / $valid_runs" | bc -l)|$(echo "scale=8; $wireless_sum / $valid_runs" | bc -l)"
 }
 
 # Main test loop
-config_file="../config_examples/${TOPOLOGY}.yaml"
+config_file="${REPO_ROOT}/config_examples/${TOPOLOGY}.yaml"
+
+if [ ! -x "$NOXIM_BIN" ]; then
+    echo "ERROR: noxim binary not found or not executable: $NOXIM_BIN"
+    exit 1
+fi
 
 if [ ! -f "$config_file" ]; then
     echo "ERROR: Config file not found: $config_file"
@@ -65,10 +81,10 @@ fi
 
 echo ""
 echo "================================================"
-echo "SOP Unicast Topology PIR Sweep Test"
+echo "SOP Broadcast Topology PIR Sweep Test"
 echo "================================================"
 echo "Configuration: $config_file"
-echo "Traffic Distribution: TRAFFIC_RANDOM (Poisson)"
+echo "Traffic Distribution: TRAFFIC_BROADCAST_LONG_DISTANCE"
 echo "VC Values: ${VC_VALUES[@]}"
 echo "PIR Values: ${PIR_VALUES[@]}"
 echo "Number of simulations per configuration: $NUM_RUNS"
@@ -84,6 +100,7 @@ for vc in "${VC_VALUES[@]}"; do
         echo ""
         echo "  PIR=$pir (Running $NUM_RUNS simulations)"
         
+        metrics_array=()
         declare -a metrics_array
         
         for run in $(seq 0 $((NUM_RUNS-1))); do
@@ -92,10 +109,16 @@ for vc in "${VC_VALUES[@]}"; do
             echo -n "    Run $((run+1))/$NUM_RUNS (seed=$seed)... "
             
             # Run simulation with timeout
-            output=$(timeout 120 ./noxim -config "$config_file" -vc "$vc" -pir "$pir" poisson -seed "$seed" 2>&1)
-            
-            if [ $? -eq 124 ]; then
+            set +e
+            output=$(timeout 120 "$NOXIM_BIN" -config "$config_file" -traffic bcast_longdist -vc "$vc" -pir "$pir" poisson -seed "$seed" 2>&1)
+            exit_code=$?
+            set -e
+
+            if [ "$exit_code" -eq 124 ]; then
                 echo "TIMEOUT (120s exceeded)"
+                continue
+            elif [ "$exit_code" -ne 0 ]; then
+                echo "FAILED (exit code $exit_code)"
                 continue
             fi
             

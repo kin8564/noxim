@@ -197,7 +197,7 @@ probability_of_retransmission: 0.01
 #   TRAFFIC_MULTICAST
 #   TRAFFIC_HARDCODED
 #   TRAFFIC_LONG_DISTANCE
-traffic_distribution: TRAFFIC_LONG_DISTANCE
+traffic_distribution: TRAFFIC_RANDOM
 # when traffic table based is specified, use the following
 # configuration file
 traffic_table_filename: "t.txt"
