@@ -64,7 +64,6 @@ SC_MODULE(ProcessingElement)
     Packet trafficLongDistance();	// Random with long-distance destination bias
         void enqueueBroadcastPackets(double now);
         void enqueueBroadcastLongDistancePackets(double now);
-        void enqueueMulticastPackets(double now);
         void enqueuePacketForDestination(int dst_id, double now);
 
     size_t traffic_cycle = 0;

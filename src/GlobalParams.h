@@ -83,7 +83,6 @@ using namespace std;
 #define TRAFFIC_LONG_DISTANCE  "TRAFFIC_LONG_DISTANCE"
 #define TRAFFIC_BROADCAST      "TRAFFIC_BROADCAST"
 #define TRAFFIC_BROADCAST_LONG_DISTANCE "TRAFFIC_BROADCAST_LONG_DISTANCE"
-#define TRAFFIC_MULTICAST      "TRAFFIC_MULTICAST"
 #define TRAFFIC_HARDCODED      "TRAFFIC_HARDCODED"
 
 // Verbosity levels
@@ -174,7 +173,6 @@ struct GlobalParams {
     static string traffic_distribution;
     static string traffic_table_filename;
     static string traffic_hardcoded_filename;
-    static unsigned long long multicast_hub_mask;
     static string config_filename;
     static string power_config_filename;
     static int clock_period_ps;
@@ -191,7 +189,6 @@ struct GlobalParams {
     static bool use_winoc;
     static int winoc_dst_hops;
     static bool use_powermanager;
-    static bool use_wireless_backoff;
     static ChannelConfig default_channel_configuration;
     static map<int, ChannelConfig> channel_configuration;
     static HubConfig default_hub_configuration;

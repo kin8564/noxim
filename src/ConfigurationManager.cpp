@@ -87,7 +87,6 @@ void loadConfiguration() {
     GlobalParams::traffic_distribution = readParam<string>(config, "traffic_distribution");
     GlobalParams::traffic_table_filename = readParam<string>(config, "traffic_table_filename");
     GlobalParams::traffic_hardcoded_filename = readParam<string>(config, "traffic_hardcoded_filename");
-    GlobalParams::multicast_hub_mask = readParam<unsigned long long>(config, "multicast_hub_mask", 0ULL);
     GlobalParams::clock_period_ps = readParam<int>(config, "clock_period_ps");
     GlobalParams::simulation_time = readParam<int>(config, "simulation_time");
     GlobalParams::n_virtual_channels = readParam<int>(config, "n_virtual_channels");
@@ -101,9 +100,7 @@ void loadConfiguration() {
     GlobalParams::show_buffer_stats = readParam<bool>(config, "show_buffer_stats");
     GlobalParams::use_winoc = readParam<bool>(config, "use_winoc");
     GlobalParams::winoc_dst_hops = readParam<int>(config, "winoc_dst_hops",0);
-    GlobalParams::use_powermanager = readParam<bool>(config, "use_wirxsleep");
-    GlobalParams::use_wireless_backoff = readParam<bool>(config, "use_wireless_backoff", false);
-    
+    GlobalParams::use_powermanager = readParam<bool>(config, "use_wirxsleep");    
 
     set<int> channelSet;
 
@@ -258,9 +255,7 @@ void showHelp(char selfname[])
          << "\t\tlongdist\tRandom traffic biased toward long-distance destinations" << endl
          << "\t\tbroadcast\tSource sends to all destinations (except itself)" << endl
          << "\t\tbcast_longdist\tBroadcast limited to long-distance destinations" << endl
-         << "\t\tmulticast\tSource sends to destinations under selected hub mask" << endl
          <<	"\t\ttable FILENAME\tTraffic Table Based traffic distribution with table in the specified file" << endl
-         << "\t-mcast_mask N\t\tSet multicast hub bitmask (supports decimal/hex, e.g. 0x00FF)" << endl
          << "\t-hs ID P\t\tAdd node ID to hotspot nodes, with percentage P (0..1) (Only for 'random' traffic)" << endl
          << "\t-warmup N\t\tStart to collect statistics after N cycles" << endl
          << "\t-seed N\t\t\tSet the seed of the random generator (default time())" << endl
@@ -611,9 +606,6 @@ void parseCmdLine(int arg_num, char *arg_vet[])
         else if (!strcmp(traffic, "bcast_longdist"))
             GlobalParams::traffic_distribution =
             TRAFFIC_BROADCAST_LONG_DISTANCE;
-        else if (!strcmp(traffic, "multicast"))
-            GlobalParams::traffic_distribution =
-            TRAFFIC_MULTICAST;
 		else if (!strcmp(traffic, "table")) {
 		    GlobalParams::traffic_distribution =
 			TRAFFIC_TABLE_BASED;
@@ -643,8 +635,6 @@ void parseCmdLine(int arg_num, char *arg_vet[])
 		GlobalParams::detailed = true;
 	    else if (!strcmp(arg_vet[i], "-show_buf_stats"))
 		GlobalParams::show_buffer_stats = true;
-        else if (!strcmp(arg_vet[i], "-mcast_mask"))
-        GlobalParams::multicast_hub_mask = strtoull(arg_vet[++i], NULL, 0);
 	    else if (!strcmp(arg_vet[i], "-volume"))
 		GlobalParams::max_volume_to_be_drained =
 		    atoi(arg_vet[++i]);

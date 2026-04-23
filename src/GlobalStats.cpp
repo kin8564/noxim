@@ -519,12 +519,12 @@ void GlobalStats::showStats(std::ostream & out, bool detailed)
 #endif
 
     //int total_cycles = GlobalParams::simulation_time - GlobalParams::stats_warm_up_time;
-    // out << "% Total received packets: " << getReceivedPackets() << endl;
-    // out << "% Total received flits: " << getReceivedFlits() << endl;
-    // out << "% Received/Ideal flits Ratio: " << getReceivedIdealFlitRatio() << endl;
+    out << "% Total received packets: " << getReceivedPackets() << endl;
+    out << "% Total received flits: " << getReceivedFlits() << endl;
+    out << "% Received/Ideal flits Ratio: " << getReceivedIdealFlitRatio() << endl;
     out << "% Average wireless utilization: " << getWirelessPackets()/(double)getReceivedPackets() << endl;
     out << "% Global average delay (cycles): " << getAverageDelay() << endl;
-    // out << "% Max delay (cycles): " << getMaxDelay() << endl;
+    out << "% Max delay (cycles): " << getMaxDelay() << endl;
     // out << "% Network throughput (flits/cycle): " << getAggregatedThroughput() << endl;
     out << "% Average IP throughput (flits/cycle/IP): " << getThroughput() << endl;
     out << "% Total energy (J): " << getTotalPower() << endl;
