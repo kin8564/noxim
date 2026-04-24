@@ -1,0 +1,3 @@
+Channels,PIR,Run,Seed,Throughput_flits_cycle_IP,Delay_cycles,Energy_J,Wireless_Utilization,Energy_per_Throughput
+1,0.05,1,0,0.0218359,1178.2,6.25517e-05,0.185012,2.864626601148e-03
+2,0.05,1,0,0.0424414,1218.12,7.20986e-05,0.178571,1.698779964846e-03
