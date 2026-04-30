@@ -11,9 +11,10 @@ set -e
 
 # Configuration
 TOPOLOGY="sop_unicast"
-VC_VALUES=(8)
+VC_VALUES=(16)
 # PIR_VALUES=(0.01 0.02 0.03 0.04 0.05 0.06 0.07 0.08 0.09 0.10)
-PIR_VALUES=(0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0)
+# PIR_VALUES=(0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0)
+PIR_VALUES=(0.001 0.01 0.1 1.0)
 NUM_RUNS=10
 RESULTS_DIR="./vc_sweep_results"
 TIMESTAMP=$(date +%Y%m%d_%H%M%S)

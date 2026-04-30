@@ -2,7 +2,7 @@
 
 # FDMA channel-count sweep for Noxim WiNoC configurations.
 # Varies the number of radio channels by editing hub default rx/tx channel lists,
-# runs multiple seeds per point, and stores per-run + averaged metrics.
+# runs multiple seeds per point with long-distance traffic, and stores per-run + averaged metrics.
 
 set -euo pipefail
 
@@ -10,6 +10,7 @@ CONFIG_FILE="${CONFIG_FILE:-../config_examples/sop_unicast.yaml}"
 VC="${VC:-8}"
 CHANNEL_VALUES="${CHANNEL_VALUES:-1 4 8 12 16}"
 PIR_VALUES="${PIR_VALUES:-0.01 0.03 0.04 0.06 0.07 0.09}"
+TRAFFIC_MODE="${TRAFFIC_MODE:-longdist}"
 NUM_RUNS="${NUM_RUNS:-10}"
 SEED_STRIDE="${SEED_STRIDE:-100}"
 SIM_TIME="${SIM_TIME:-}"
@@ -17,8 +18,8 @@ TIMEOUT_SEC="${TIMEOUT_SEC:-180}"
 RESULTS_DIR="${RESULTS_DIR:-./wireless_results}"
 
 TIMESTAMP=$(date +%Y%m%d_%H%M%S)
-RAW_CSV="${RESULTS_DIR}/fdma_channel_sweep_raw_${TIMESTAMP}.csv"
-AVG_CSV="${RESULTS_DIR}/fdma_channel_sweep_avg_${TIMESTAMP}.csv"
+RAW_CSV="${RESULTS_DIR}/fdma_distance_channel_sweep_raw_${TIMESTAMP}.csv"
+AVG_CSV="${RESULTS_DIR}/fdma_distance_channel_sweep_avg_${TIMESTAMP}.csv"
 
 mkdir -p "${RESULTS_DIR}"
 
@@ -96,10 +97,11 @@ echo "Channels,PIR,Run,Seed,Throughput_flits_cycle_IP,Delay_cycles,Energy_J,Wire
 echo "Channels,PIR,Avg_Throughput_flits_cycle_IP,Avg_Delay_cycles,Avg_Energy_J,Avg_Wireless_Utilization,Avg_Energy_per_Throughput,Valid_Runs" > "${AVG_CSV}"
 
 echo "================================================"
-echo "FDMA Channel Count Sweep"
+echo "FDMA Channel Count Sweep (Long-Distance Traffic)"
 echo "================================================"
 echo "Config file: ${CONFIG_FILE}"
 echo "VC: ${VC}"
+echo "Traffic mode: ${TRAFFIC_MODE}"
 echo "Channels: ${CHANNEL_VALUES}"
 echo "PIR values: ${PIR_VALUES}"
 echo "Runs per point: ${NUM_RUNS}"
@@ -123,7 +125,7 @@ for channels in ${CHANNEL_VALUES}; do
             seed=$((run * SEED_STRIDE))
             echo -n "    Run $((run + 1))/${NUM_RUNS}, seed=${seed}... "
 
-            cmd=(./noxim -config "${temp_config}" -vc "${VC}" -pir "${pir}" poisson -seed "${seed}")
+            cmd=(./noxim -config "${temp_config}" -vc "${VC}" -pir "${pir}" poisson -traffic "${TRAFFIC_MODE}" -seed "${seed}")
             if [[ -n "${SIM_TIME}" ]]; then
                 cmd+=( -sim "${SIM_TIME}" )
             fi

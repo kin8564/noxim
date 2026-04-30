@@ -9,10 +9,11 @@
 set -e
 
 # Configuration
-TOPOLOGY="256_16h_8channels"
+TOPOLOGY="sop_wired"
 VC_VALUES=(8)
 # PIR_VALUES=(0.01 0.02 0.03 0.04 0.05 0.06 0.07 0.08 0.09 0.10)
-PIR_VALUES=(0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0)
+# PIR_VALUES=(0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0)
+PIR_VALUES=(0.001 0.01 0.1 1.0)
 NUM_RUNS=10
 RESULTS_DIR="./wireless_results"
 TIMESTAMP=$(date +%Y%m%d_%H%M%S)

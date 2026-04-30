@@ -11,7 +11,7 @@ set -e
 # Configuration
 TOPOLOGY="sop_broadcast"
 VC_VALUES=(8)
-PIR_VALUES=(0.01 0.02 0.03 0.04 0.05 0.06 0.07 0.08 0.09 0.10)
+PIR_VALUES=(1.0)
 NUM_RUNS=10
 RESULTS_DIR="./wireless_results"
 TIMESTAMP=$(date +%Y%m%d_%H%M%S)
