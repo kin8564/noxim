@@ -9,12 +9,13 @@ set -euo pipefail
 CONFIG_FILE="${CONFIG_FILE:-../config_examples/sop_unicast.yaml}"
 VC="${VC:-8}"
 CHANNEL_VALUES="${CHANNEL_VALUES:-1 4 8 12 16}"
-PIR_VALUES="${PIR_VALUES:-0.01 0.03 0.04 0.06 0.07 0.09}"
+# PIR_VALUES="${PIR_VALUES:-0.01 0.02 0.03 0.04 0.05 0.06 0.07 0.08 0.09 0.10}"
+PIR_VALUES="${PIR_VALUES:-0.001 0.002 0.003 0.004 0.005 0.006 0.007 0.008 0.009 0.01}"
 NUM_RUNS="${NUM_RUNS:-10}"
 SEED_STRIDE="${SEED_STRIDE:-100}"
 SIM_TIME="${SIM_TIME:-}"
 TIMEOUT_SEC="${TIMEOUT_SEC:-180}"
-RESULTS_DIR="${RESULTS_DIR:-./wireless_results}"
+RESULTS_DIR="${RESULTS_DIR:-./final_results}"
 
 TIMESTAMP=$(date +%Y%m%d_%H%M%S)
 RAW_CSV="${RESULTS_DIR}/fdma_channel_sweep_raw_${TIMESTAMP}.csv"
@@ -74,26 +75,21 @@ make_temp_config() {
 
 extract_metrics() {
     local output="$1"
-    local throughput delay energy wireless
+    local avg_ip_throughput global_avg_delay energy
 
-    throughput=$(echo "${output}" | grep "% Average IP throughput" | awk '{print $NF}' | sed 's/[^0-9.eE+-]//g')
-    delay=$(echo "${output}" | grep "% Global average delay" | awk '{print $NF}' | sed 's/[^0-9.eE+-]//g')
+    avg_ip_throughput=$(echo "${output}" | grep "% Average IP throughput" | awk '{print $NF}' | sed 's/[^0-9.eE+-]//g')
+    global_avg_delay=$(echo "${output}" | grep "% Global average delay" | awk '{print $NF}' | sed 's/[^0-9.eE+-]//g')
     energy=$(echo "${output}" | grep "% Total energy" | awk '{print $NF}' | sed 's/[^0-9.eE+-]//g')
-    wireless=$(echo "${output}" | grep "% Average wireless utilization" | awk '{print $NF}' | sed 's/[^0-9.eE+-]//g')
 
-    if [[ -z "${throughput}" || -z "${delay}" || -z "${energy}" || -z "${wireless}" ]]; then
+    if [[ -z "${avg_ip_throughput}" || -z "${global_avg_delay}" || -z "${energy}" ]]; then
         return 1
     fi
 
-    # Lower is better (J per delivered flit/cycle/IP unit).
-    local energy_per_thr
-    energy_per_thr=$(awk -v e="${energy}" -v t="${throughput}" 'BEGIN { if (t <= 0) print "nan"; else printf "%.12e", (e/t) }')
-
-    echo "${throughput}|${delay}|${energy}|${wireless}|${energy_per_thr}"
+    echo "${avg_ip_throughput}|${global_avg_delay}|${energy}"
 }
 
-echo "Channels,PIR,Run,Seed,Throughput_flits_cycle_IP,Delay_cycles,Energy_J,Wireless_Utilization,Energy_per_Throughput" > "${RAW_CSV}"
-echo "Channels,PIR,Avg_Throughput_flits_cycle_IP,Avg_Delay_cycles,Avg_Energy_J,Avg_Wireless_Utilization,Avg_Energy_per_Throughput,Valid_Runs" > "${AVG_CSV}"
+echo "Channels,PIR,Run,Seed,Avg_IP_Throughput_flits_cycle_IP,Global_Avg_Delay_cycles,Total_Energy_J" > "${RAW_CSV}"
+echo "Channels,PIR,Avg_IP_Throughput_flits_cycle_IP,Avg_Global_Avg_Delay_cycles,Avg_Total_Energy_J,Valid_Runs" > "${AVG_CSV}"
 
 echo "================================================"
 echo "FDMA Channel Count Sweep"
@@ -147,21 +143,22 @@ for channels in ${CHANNEL_VALUES}; do
                 continue
             fi
 
-            IFS='|' read -r thr dly eng wutil ept <<< "${metrics}"
-            printf "OK thr=%.6e delay=%.2f energy=%.3e wutil=%.4f ept=%.3e\n" "${thr}" "${dly}" "${eng}" "${wutil}" "${ept}"
-            echo "${channels},${pir},$((run + 1)),${seed},${thr},${dly},${eng},${wutil},${ept}" >> "${RAW_CSV}"
+            IFS='|' read -r avg_ip_thr avg_dly energy <<< "${metrics}"
+            printf "OK ip_thr=%.6e avg_delay=%.2f energy=%.3e\n" "${avg_ip_thr}" "${avg_dly}" "${energy}"
+            echo "${channels},${pir},$((run + 1)),${seed},${avg_ip_thr},${avg_dly},${energy}" >> "${RAW_CSV}"
         done
 
         awk -F',' -v c="${channels}" -v p="${pir}" '
-            BEGIN { t=0; d=0; e=0; w=0; x=0; n=0 }
+            BEGIN { ip=0; gd=0; en=0; n=0 }
             NR > 1 && $1 == c && $2 == p {
-                t += $5; d += $6; e += $7; w += $8;
-                if ($9 != "nan") { x += $9 }
+                ip += $5;
+                gd += $6;
+                en += $7;
                 n += 1;
             }
             END {
                 if (n > 0) {
-                    printf "%s,%s,%.10e,%.8f,%.12e,%.10e,%.12e,%d\n", c, p, t/n, d/n, e/n, w/n, x/n, n;
+                    printf "%s,%s,%.10e,%.6f,%.10e,%d\n", c, p, ip/n, gd/n, en/n, n;
                 }
             }
         ' "${RAW_CSV}" >> "${AVG_CSV}"
@@ -178,27 +175,27 @@ echo "Averaged results:${AVG_CSV}"
 echo "================================================"
 echo
 
-echo "Top channel count per PIR (min Avg_Energy_per_Throughput):"
+echo "Top channel count per PIR (max Avg_IP_Throughput):"
 awk -F',' '
     NR == 1 { next }
     {
         pir = $2;
         channels = $1;
-        ept = $7;
-        thr = $3;
-        en = $5;
+        ip_thr = $3;
+        avg_dly = $4;
+        avg_en = $5;
 
-        if (!(pir in best_ept) || ept < best_ept[pir]) {
-            best_ept[pir] = ept;
+        if (!(pir in best_ip_thr) || ip_thr > best_ip_thr[pir]) {
+            best_ip_thr[pir] = ip_thr;
             best_channels[pir] = channels;
-            best_thr[pir] = thr;
-            best_energy[pir] = en;
+            best_avg_dly[pir] = avg_dly;
+            best_avg_en[pir] = avg_en;
         }
     }
     END {
-        printf "PIR,Best_Channels,Avg_Throughput,Avg_Energy,Avg_Energy_per_Throughput\n";
+        printf "PIR,Best_Channels,Avg_IP_Throughput,Avg_Global_Delay,Avg_Total_Energy\n";
         for (pir in best_channels) {
-            printf "%s,%s,%.10e,%.12e,%.12e\n", pir, best_channels[pir], best_thr[pir], best_energy[pir], best_ept[pir];
+            printf "%s,%s,%.10e,%.6f,%.10e\n", pir, best_channels[pir], best_ip_thr[pir], best_avg_dly[pir], best_avg_en[pir];
         }
     }
 ' "${AVG_CSV}"

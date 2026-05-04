@@ -1,37 +1,39 @@
 #!/bin/bash
 
-# SOP Broadcast PIR Sweep Test Script
-# Tests: sop_broadcast topology with random traffic distribution
-# PIR sweep: 0.001 to 0.01 (by 0.001 step)
+# SOP Wired PIR Sweep Test Script
+# Tests: sop_wired topology with long distance traffic distribution
+# PIR sweep: 0.001 to 0.01
 # Runs: 10 simulations per configuration with different seeds
-# Metrics: Throughput, Delay, Energy, Wireless Utilization
+# Metrics: Throughput, Delay, Energy
 
 set -e
 
 # Configuration
-TOPOLOGY="sop_broadcast"
+TOPOLOGY="sop_wired"
 VC_VALUES=(8)
-# PIR_VALUES=(1.0)
 PIR_VALUES=(0.001 0.002 0.003 0.004 0.005 0.006 0.007 0.008 0.009 0.01)
 NUM_RUNS=10
-RESULTS_DIR="./final_results"
 TIMESTAMP=$(date +%Y%m%d_%H%M%S)
-RESULTS_FILE="${RESULTS_DIR}/sop_broadcast_pir_sweep_${TIMESTAMP}.csv"
-AVG_RESULTS_FILE="${RESULTS_DIR}/sop_broadcast_pir_sweep_avg_${TIMESTAMP}.csv"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
+NOXIM_BIN="${SCRIPT_DIR}/noxim"
+RESULTS_DIR="${SCRIPT_DIR}/final_results"
+RESULTS_FILE="${RESULTS_DIR}/wired_distance_pir_sweep_${TIMESTAMP}.csv"
+AVG_RESULTS_FILE="${RESULTS_DIR}/wired_distance_pir_sweep_avg_${TIMESTAMP}.csv"
 
 # Create results directory
 mkdir -p "${RESULTS_DIR}"
 
-# Initialize results files with headers
-echo "VC,PIR,Run,Throughput_flits_cycle_IP,Delay_cycles,Energy_J,Wireless_Utilization" > "${RESULTS_FILE}"
+# Initialize results files with header
+echo "VC,PIR,Run,Throughput_flits_cycle_IP,Delay_cycles,Energy_J" > "${RESULTS_FILE}"
 echo "VC,PIR,Avg_Throughput_flits_cycle_IP,Avg_Delay_cycles,Avg_Energy_J,Valid_Runs" > "${AVG_RESULTS_FILE}"
 
 # Function to extract metrics from noxim output
 extract_metrics() {
     local output=$1
-    local throughput=$(echo "$output" | grep "% Average IP throughput" | awk '{print $NF}' | sed 's/[^0-9.e-]*//g')
-    local delay=$(echo "$output" | grep "% Global average delay" | awk '{print $NF}' | sed 's/[^0-9.e-]*//g')
-    local energy=$(echo "$output" | grep "% Total energy" | awk '{print $NF}' | sed 's/[^0-9.e-]*//g')
+    local throughput=$(echo "$output" | grep "% Average IP throughput" | awk '{print $NF}' | sed 's/[^0-9.e-]*//g' || true)
+    local delay=$(echo "$output" | grep "% Global average delay" | awk '{print $NF}' | sed 's/[^0-9.e-]*//g' || true)
+    local energy=$(echo "$output" | grep "% Total energy" | awk '{print $NF}' | sed 's/[^0-9.e-]*//g' || true)
     echo "$throughput|$delay|$energy"
 }
 
@@ -62,7 +64,12 @@ calculate_averages() {
 }
 
 # Main test loop
-config_file="../config_examples/${TOPOLOGY}.yaml"
+config_file="${REPO_ROOT}/config_examples/${TOPOLOGY}.yaml"
+
+if [ ! -x "$NOXIM_BIN" ]; then
+    echo "ERROR: noxim binary not found or not executable: $NOXIM_BIN"
+    exit 1
+fi
 
 if [ ! -f "$config_file" ]; then
     echo "ERROR: Config file not found: $config_file"
@@ -71,10 +78,10 @@ fi
 
 echo ""
 echo "================================================"
-echo "SOP Broadcast Topology PIR Sweep Test"
+echo "SOP Wired Topology PIR Sweep Test"
 echo "================================================"
 echo "Configuration: $config_file"
-echo "Traffic Distribution: TRAFFIC_BROADCAST"
+echo "Traffic Distribution: TRAFFIC_LONG_DISTANCE (Poisson)"
 echo "VC Values: ${VC_VALUES[@]}"
 echo "PIR Values: ${PIR_VALUES[@]}"
 echo "Number of simulations per configuration: $NUM_RUNS"
@@ -85,45 +92,46 @@ for vc in "${VC_VALUES[@]}"; do
     echo "================================================"
     echo "Testing VC=$vc"
     echo "================================================"
-    
+
     for pir in "${PIR_VALUES[@]}"; do
         echo ""
         echo "  PIR=$pir (Running $NUM_RUNS simulations)"
-        
-        declare -a metrics_array
-        
+
+        metrics_array=()
+
         for run in $(seq 0 $((NUM_RUNS-1))); do
-            seed=$((run * 100)) # Unique seeds: 0, 100, 200, ..., 900
-            
+            seed=$((run * 100))
+
             echo -n "    Run $((run+1))/$NUM_RUNS (seed=$seed)... "
-            
-            # Run simulation with timeout
-            output=$(timeout 120 ./noxim -config "$config_file" -vc "$vc" -pir "$pir" poisson -seed "$seed" 2>&1)
-            
-            if [ $? -eq 124 ]; then
+
+            set +e
+            output=$(timeout 120 "$NOXIM_BIN" -config "$config_file" -vc "$vc" -traffic longdist -pir "$pir" poisson -seed "$seed" 2>&1)
+            exit_code=$?
+            set -e
+
+            if [ "$exit_code" -eq 124 ]; then
                 echo "TIMEOUT (120s exceeded)"
                 continue
+            elif [ "$exit_code" -ne 0 ]; then
+                echo "FAILED (exit code $exit_code)"
+                continue
             fi
-            
-            # Extract metrics from the output
+
             metrics=$(extract_metrics "$output")
-            
+
             if [ -z "$metrics" ]; then
                 echo "FAILED to extract metrics"
                 continue
             fi
-            
+
             metrics_array[$run]="$metrics"
 
-            # Parse and display individual run results
             IFS='|' read throughput delay energy <<< "$metrics"
             printf "Throughput=%.6e flits/cycle/IP, Delay=%.2f cycles, Energy=%.2e J\n" "$throughput" "$delay" "$energy"
 
-            # Log individual run to results file (no wireless)
             echo "$vc,$pir,$((run+1)),$throughput,$delay,$energy" >> "${RESULTS_FILE}"
         done
-        
-        # Calculate and display averages using actual valid runs
+
         valid_runs=0
         for m in "${metrics_array[@]}"; do
             if [ -n "$m" ]; then
@@ -134,7 +142,6 @@ for vc in "${VC_VALUES[@]}"; do
         avg_metrics=$(calculate_averages "$valid_runs" "${metrics_array[@]}")
         IFS='|' read avg_throughput avg_delay avg_energy <<< "$avg_metrics"
 
-        # Append averaged row to avg results CSV
         echo "$vc,$pir,$avg_throughput,$avg_delay,$avg_energy,$valid_runs" >> "${AVG_RESULTS_FILE}"
 
         echo ""
@@ -150,13 +157,13 @@ echo "================================================"
 echo "Test Summary"
 echo "================================================"
 echo "All results saved to: $RESULTS_FILE"
+echo "Averaged results saved to: $AVG_RESULTS_FILE"
 echo ""
 echo "Summary by VC and PIR:"
 echo "---"
 
-# Generate summary table and ensure averaged CSV exists (header already written)
 awk -F',' '
-    NR == 1 { next }  # Skip header
+    NR == 1 { next }
     {
         vc = $1
         pir = $2
@@ -176,7 +183,7 @@ awk -F',' '
             avg_t = throughput_sum[key] / count[key]
             avg_d = delay_sum[key] / count[key]
             avg_e = energy_sum[key] / count[key]
-            printf "%d\t%.2f\t%.8e\t%.6f\t%.10e\n", vc, pir, avg_t, avg_d, avg_e
+            printf "%d\t%.3f\t%.8e\t%.6f\t%.10e\n", vc, pir, avg_t, avg_d, avg_e
         }
     }' "${RESULTS_FILE}"
 

@@ -2,8 +2,8 @@
 
 # SOP Unicast PIR Sweep Metrics Script
 # Tests: sop_unicast topology with long distance traffic distribution
-# PIR sweep: 0.01 to 0.10 (by 0.01 step)
-# Runs: 5 simulations per configuration with different seeds
+# PIR sweep: 0.001 to 0.01 (by 0.001 step)
+# Runs: 10 simulations per configuration with different seeds
 # Metrics: Total received packets, Received/Ideal flits Ratio, Total energy
 
 set -e
@@ -11,17 +11,19 @@ set -e
 # Configuration
 TOPOLOGY="sop_unicast"
 VC_VALUES=(8)
-PIR_VALUES=(0.01 0.02 0.03 0.04 0.05 0.06 0.07 0.08 0.09 0.10)
-NUM_RUNS=5
-RESULTS_DIR="./vc_sweep_results"
+PIR_VALUES=(0.001 0.002 0.003 0.004 0.005 0.006 0.007 0.008 0.009 0.01)
+NUM_RUNS=10
+RESULTS_DIR="./final_results"
 TIMESTAMP=$(date +%Y%m%d_%H%M%S)
-RESULTS_FILE="${RESULTS_DIR}/sop_unicast_pir_metrics_sweep_${TIMESTAMP}.csv"
+RESULTS_FILE="${RESULTS_DIR}/sop_unicast_distance_packets_${TIMESTAMP}.csv"
+AVG_RESULTS_FILE="${RESULTS_DIR}/sop_unicast_distance_packets_avg_${TIMESTAMP}.csv"
 
 # Create results directory
 mkdir -p "${RESULTS_DIR}"
 
 # Initialize results file with header
 echo "VC,PIR,Run,Total_Received_Packets,Received_Ideal_Flits_Ratio,Energy_J" > "${RESULTS_FILE}"
+echo "VC,PIR,Avg_Total_Received_Packets,Avg_Received_Ideal_Flits_Ratio,Avg_Energy_J,Valid_Runs" > "${AVG_RESULTS_FILE}"
 
 # Function to extract metrics from noxim output
 extract_metrics() {
@@ -40,7 +42,15 @@ calculate_averages() {
     local count=$1
     shift
 
+    if [ "$count" -eq 0 ]; then
+        echo "0|0|0"
+        return
+    fi
+
     for metric_line in "$@"; do
+        if [ -z "$metric_line" ]; then
+            continue
+        fi
         IFS='|' read -r received_packets flit_ratio energy <<< "$metric_line"
         packets_sum=$(echo "$packets_sum + $received_packets" | bc -l)
         ratio_sum=$(echo "$ratio_sum + $flit_ratio" | bc -l)
@@ -79,7 +89,7 @@ for vc in "${VC_VALUES[@]}"; do
         echo ""
         echo "  PIR=$pir (Running $NUM_RUNS simulations)"
 
-        declare -a metrics_array
+        metrics_array=()
 
         for run in $(seq 0 $((NUM_RUNS-1))); do
             seed=$((run * 100))
@@ -108,12 +118,21 @@ for vc in "${VC_VALUES[@]}"; do
             echo "$vc,$pir,$((run+1)),$received_packets,$flit_ratio,$energy" >> "${RESULTS_FILE}"
         done
 
-        avg_metrics=$(calculate_averages "$NUM_RUNS" "${metrics_array[@]}")
+        valid_runs=0
+        for m in "${metrics_array[@]}"; do
+            if [ -n "$m" ]; then
+                valid_runs=$((valid_runs+1))
+            fi
+        done
+
+        avg_metrics=$(calculate_averages "$valid_runs" "${metrics_array[@]}")
         IFS='|' read -r avg_packets avg_ratio avg_energy <<< "$avg_metrics"
+
+        echo "$vc,$pir,$avg_packets,$avg_ratio,$avg_energy,$valid_runs" >> "${AVG_RESULTS_FILE}"
 
         echo ""
         echo "  AVERAGES for VC=$vc, PIR=$pir:"
-        printf "    Avg Total Received Packets: %.8f\n" "$avg_packets"
+        printf "    Avg Total Received Packets: %.0f\n" "$avg_packets"
         printf "    Avg Received/Ideal Flits Ratio: %.8f\n" "$avg_ratio"
         printf "    Avg Energy: %.10e J\n" "$avg_energy"
     done
@@ -124,6 +143,7 @@ echo "================================================"
 echo "Test Summary"
 echo "================================================"
 echo "All results saved to: $RESULTS_FILE"
+echo "Averaged results saved to: $AVG_RESULTS_FILE"
 echo ""
 echo "Summary by VC and PIR:"
 echo "---"
@@ -149,7 +169,7 @@ awk -F',' '
             avg_p = packets_sum[key] / count[key]
             avg_r = ratio_sum[key] / count[key]
             avg_e = energy_sum[key] / count[key]
-            printf "%d\t%.2f\t%.8f\t%.8f\t%.10e\n", vc, pir, avg_p, avg_r, avg_e
+            printf "%d\t%.3f\t%.0f\t%.8f\t%.10e\n", vc, pir, avg_p, avg_r, avg_e
         }
     }' "${RESULTS_FILE}"
 

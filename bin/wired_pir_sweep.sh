@@ -2,9 +2,9 @@
 
 # SOP Wired PIR Sweep Test Script
 # Tests: sop_wired topology with random traffic distribution
-# PIR sweep: 0.01 to 0.1 (by 0.01 step)
+# PIR sweep: 0.001 to 0.01 (by 0.001 step)
 # Runs: 10 simulations per configuration with different seeds
-# Metrics: Throughput, Delay, Energy, Wireless Utilization
+# Metrics: Throughput, Delay, Energy
 
 set -e
 
@@ -13,17 +13,20 @@ TOPOLOGY="sop_wired"
 VC_VALUES=(8)
 # PIR_VALUES=(0.01 0.02 0.03 0.04 0.05 0.06 0.07 0.08 0.09 0.10)
 # PIR_VALUES=(0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0)
-PIR_VALUES=(0.001 0.01 0.1 1.0)
+# PIR_VALUES=(0.001 0.01 0.1 1.0)
+PIR_VALUES=(0.001 0.002 0.003 0.004 0.005 0.006 0.007 0.008 0.009 0.01)
 NUM_RUNS=10
-RESULTS_DIR="./wireless_results"
+RESULTS_DIR="./final_results"
 TIMESTAMP=$(date +%Y%m%d_%H%M%S)
 RESULTS_FILE="${RESULTS_DIR}/wired_pir_sweep_${TIMESTAMP}.csv"
+AVG_RESULTS_FILE="${RESULTS_DIR}/wired_pir_sweep_avg_${TIMESTAMP}.csv"
 
 # Create results directory
 mkdir -p "${RESULTS_DIR}"
 
-# Initialize results file with header
-echo "VC,PIR,Run,Throughput_flits_cycle_IP,Delay_cycles,Energy_J,Wireless_Utilization" > "${RESULTS_FILE}"
+# Initialize results files with header
+echo "VC,PIR,Run,Throughput_flits_cycle_IP,Delay_cycles,Energy_J" > "${RESULTS_FILE}"
+echo "VC,PIR,Avg_Throughput_flits_cycle_IP,Avg_Delay_cycles,Avg_Energy_J,Valid_Runs" > "${AVG_RESULTS_FILE}"
 
 # Function to extract metrics from noxim output
 extract_metrics() {
@@ -31,28 +34,33 @@ extract_metrics() {
     local throughput=$(echo "$output" | grep "% Average IP throughput" | awk '{print $NF}' | sed 's/[^0-9.e-]*//g')
     local delay=$(echo "$output" | grep "% Global average delay" | awk '{print $NF}' | sed 's/[^0-9.e-]*//g')
     local energy=$(echo "$output" | grep "% Total energy" | awk '{print $NF}' | sed 's/[^0-9.e-]*//g')
-    local wireless_util=$(echo "$output" | grep "% Average wireless utilization" | awk '{print $NF}' | sed 's/[^0-9.e-]*//g')
-    echo "$throughput|$delay|$energy|$wireless_util"
+    echo "$throughput|$delay|$energy"
 }
 
-# Function to calculate average of four metrics
+# Function to calculate average of three metrics
 calculate_averages() {
     local throughput_sum=0
     local delay_sum=0
     local energy_sum=0
-    local wireless_sum=0
     local count=$1
     shift
+
+    if [ "$count" -eq 0 ]; then
+        echo "0|0|0"
+        return
+    fi
     
     for metric_line in "$@"; do
-        IFS='|' read throughput delay energy wireless <<< "$metric_line"
+        if [ -z "$metric_line" ]; then
+            continue
+        fi
+        IFS='|' read throughput delay energy <<< "$metric_line"
         throughput_sum=$(echo "$throughput_sum + $throughput" | bc -l)
         delay_sum=$(echo "$delay_sum + $delay" | bc -l)
         energy_sum=$(echo "$energy_sum + $energy" | bc -l)
-        wireless_sum=$(echo "$wireless_sum + $wireless" | bc -l)
     done
     
-    echo "$(echo "scale=8; $throughput_sum / $count" | bc -l)|$(echo "scale=6; $delay_sum / $count" | bc -l)|$(echo "scale=10; $energy_sum / $count" | bc -l)|$(echo "scale=8; $wireless_sum / $count" | bc -l)"
+    echo "$(echo "scale=8; $throughput_sum / $count" | bc -l)|$(echo "scale=6; $delay_sum / $count" | bc -l)|$(echo "scale=10; $energy_sum / $count" | bc -l)"
 }
 
 # Main test loop
@@ -84,7 +92,7 @@ for vc in "${VC_VALUES[@]}"; do
         echo ""
         echo "  PIR=$pir (Running $NUM_RUNS simulations)"
         
-        declare -a metrics_array
+        metrics_array=()
         
         for run in $(seq 0 $((NUM_RUNS-1))); do
             seed=$((run * 100)) # Unique seeds: 0, 100, 200, ..., 900
@@ -92,10 +100,16 @@ for vc in "${VC_VALUES[@]}"; do
             echo -n "    Run $((run+1))/$NUM_RUNS (seed=$seed)... "
             
             # Run simulation with timeout
+            set +e
             output=$(timeout 120 ./noxim -config "$config_file" -vc "$vc" -pir "$pir" poisson -seed "$seed" 2>&1)
+            exit_code=$?
+            set -e
             
-            if [ $? -eq 124 ]; then
+            if [ "$exit_code" -eq 124 ]; then
                 echo "TIMEOUT (120s exceeded)"
+                continue
+            elif [ "$exit_code" -ne 0 ]; then
+                echo "FAILED (exit code $exit_code)"
                 continue
             fi
             
@@ -110,23 +124,31 @@ for vc in "${VC_VALUES[@]}"; do
             metrics_array[$run]="$metrics"
             
             # Parse and display individual run results
-            IFS='|' read throughput delay energy wireless <<< "$metrics"
-            printf "Throughput=%.6e flits/cycle/IP, Delay=%.2f cycles, Energy=%.2e J, Wireless_Util=%.4f\n" "$throughput" "$delay" "$energy" "$wireless"
-            
+            IFS='|' read throughput delay energy <<< "$metrics"
+            printf "Throughput=%.6e flits/cycle/IP, Delay=%.2f cycles, Energy=%.2e J\n" "$throughput" "$delay" "$energy"
+
             # Log individual run to results file
-            echo "$vc,$pir,$((run+1)),$throughput,$delay,$energy,$wireless" >> "${RESULTS_FILE}"
+            echo "$vc,$pir,$((run+1)),$throughput,$delay,$energy" >> "${RESULTS_FILE}"
         done
         
-        # Calculate and display averages
-        avg_metrics=$(calculate_averages "$NUM_RUNS" "${metrics_array[@]}")
-        IFS='|' read avg_throughput avg_delay avg_energy avg_wireless <<< "$avg_metrics"
+        # Calculate and display averages using actual valid runs
+        valid_runs=0
+        for m in "${metrics_array[@]}"; do
+            if [ -n "$m" ]; then
+                valid_runs=$((valid_runs+1))
+            fi
+        done
+
+        avg_metrics=$(calculate_averages "$valid_runs" "${metrics_array[@]}")
+        IFS='|' read avg_throughput avg_delay avg_energy <<< "$avg_metrics"
+
+        echo "$vc,$pir,$avg_throughput,$avg_delay,$avg_energy,$valid_runs" >> "${AVG_RESULTS_FILE}"
         
         echo ""
         echo "  AVERAGES for VC=$vc, PIR=$pir:"
         printf "    Avg Throughput: %.8e flits/cycle/IP\n" "$avg_throughput"
         printf "    Avg Delay: %.6f cycles\n" "$avg_delay"
         printf "    Avg Energy: %.10e J\n" "$avg_energy"
-        printf "    Avg Wireless Utilization: %.8f\n" "$avg_wireless"
     done
 done
 
@@ -149,12 +171,11 @@ awk -F',' '
         throughput_sum[key] += $4
         delay_sum[key] += $5
         energy_sum[key] += $6
-        wireless_sum[key] += $7
         count[key] += 1
     }
     END {
-        print "VC\tPIR\tAvg_Throughput\t\tAvg_Delay\tAvg_Energy\t\tWireless_Util"
-        print "---\t---\t---\t\t\t---\t\t---\t\t\t---"
+        print "VC\tPIR\tAvg_Throughput\t\tAvg_Delay\tAvg_Energy"
+        print "---\t---\t---\t\t\t---\t\t---"
         for (key in throughput_sum) {
             split(key, arr, ",")
             vc = arr[1]
@@ -162,8 +183,7 @@ awk -F',' '
             avg_t = throughput_sum[key] / count[key]
             avg_d = delay_sum[key] / count[key]
             avg_e = energy_sum[key] / count[key]
-            avg_w = wireless_sum[key] / count[key]
-            printf "%d\t%.2f\t%.8e\t%.6f\t%.10e\t%.8f\n", vc, pir, avg_t, avg_d, avg_e, avg_w
+            printf "%d\t%.2f\t%.8e\t%.6f\t%.10e\n", vc, pir, avg_t, avg_d, avg_e
         }
     }' "${RESULTS_FILE}"
 

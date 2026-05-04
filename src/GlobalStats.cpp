@@ -525,11 +525,11 @@ void GlobalStats::showStats(std::ostream & out, bool detailed)
     out << "% Average wireless utilization: " << getWirelessPackets()/(double)getReceivedPackets() << endl;
     out << "% Global average delay (cycles): " << getAverageDelay() << endl;
     out << "% Max delay (cycles): " << getMaxDelay() << endl;
-    // out << "% Network throughput (flits/cycle): " << getAggregatedThroughput() << endl;
+    out << "% Network throughput (flits/cycle): " << getAggregatedThroughput() << endl;
     out << "% Average IP throughput (flits/cycle/IP): " << getThroughput() << endl;
     out << "% Total energy (J): " << getTotalPower() << endl;
-    // out << "% \tDynamic energy (J): " << getDynamicPower() << endl;
-    // out << "% \tStatic energy (J): " << getStaticPower() << endl;
+    out << "% \tDynamic energy (J): " << getDynamicPower() << endl;
+    out << "% \tStatic energy (J): " << getStaticPower() << endl;
 
     if (GlobalParams::show_buffer_stats)
       showBufferStats(out);
